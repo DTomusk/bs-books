@@ -6,6 +6,7 @@ import (
 	"bs-books-api/internal/delivery"
 	"bs-books-api/internal/ratings"
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 	"time"
 
 	_ "bs-books-api/docs"
+
+	_ "github.com/lib/pq"
 )
 
 // @title BS Books API
@@ -29,8 +32,15 @@ func main() {
 		return
 	}
 
-	// TODO: remove
-	fmt.Println("Database URL:", cfg.DB_URL)
+	// Connect to and ping database on startup
+	db, err := sql.Open("postgres", cfg.DB_URL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
 
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
@@ -39,6 +49,7 @@ func main() {
 	)
 	defer stop()
 
+	// DI for routes
 	bookHandler := books.NewBookHandler()
 
 	ratingService := ratings.NewRatingService()
@@ -51,6 +62,7 @@ func main() {
 		Handler: r,
 	}
 
+	// Run server in goroutine
 	go func() {
 		log.Printf("Starting server on port \n 8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -58,6 +70,7 @@ func main() {
 		}
 	}()
 
+	// Wait for interrupt signal to gracefully shutdown the server
 	<-ctx.Done()
 	log.Println("Shutting down server...")
 

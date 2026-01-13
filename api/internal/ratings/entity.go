@@ -1,5 +1,7 @@
 package ratings
 
+import "github.com/google/uuid"
+
 type Rating struct {
 	ID         string
 	BookID     string
@@ -17,6 +19,7 @@ func newRating(bookID string, heartScore, pooScore float64) (*Rating, error) {
 	}
 
 	return &Rating{
+		ID:         uuid.New().String(),
 		BookID:     bookID,
 		HeartScore: heartScore,
 		PooScore:   pooScore,

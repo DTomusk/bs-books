@@ -78,7 +78,6 @@ services:
       migrate_test:
         condition: service_completed_successfully
     environment:
-      ENV: docker
       TEST_DB_URL: postgres://user:password@db_test:5432/bs_books_test?sslmode=disable
     command: ["go", "test", "./internal/...", "-v"]
 
