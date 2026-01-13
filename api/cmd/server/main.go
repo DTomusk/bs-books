@@ -28,6 +28,8 @@ func main() {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
+	setupRoutes(r)
+
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: r,
@@ -52,4 +54,12 @@ func main() {
 	}
 
 	log.Println("Server exiting")
+}
+
+func setupRoutes(r *gin.Engine) {
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+		})
+	})
 }
