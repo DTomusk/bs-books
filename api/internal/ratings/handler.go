@@ -33,6 +33,12 @@ func (h *RatingHandler) CreateRating(ctx *gin.Context) {
 
 	_, err := h.service.CreateRating(req.BookID, req.HeartScore, req.PooScore)
 
+	switch err {
+	case ErrNegativeScore, ErrLargeScore:
+		ctx.JSON(400, response.NewError("invalid_score", err.Error()))
+		return
+	}
+
 	if err != nil {
 		ctx.JSON(500, response.NewError("internal_error", "Failed to create rating"))
 		return

@@ -1,7 +1,7 @@
 package ratings
 
 type RatingRequest struct {
-	BookID     string `json:"book_id"`
-	HeartScore int    `json:"heart_score"`
-	PooScore   int    `json:"poo_score"`
+	BookID     string  `json:"book_id"`
+	HeartScore float64 `json:"heart_score"`
+	PooScore   float64 `json:"poo_score"`
 }

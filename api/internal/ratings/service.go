@@ -6,11 +6,7 @@ func NewRatingService() *RatingService {
 	return &RatingService{}
 }
 
-func (s *RatingService) CreateRating(bookID string, heartScore int, pooScore int) (*Rating, error) {
-	rating := &Rating{
-		BookID:     bookID,
-		HeartScore: heartScore,
-		PooScore:   pooScore,
-	}
-	return rating, nil
+func (s *RatingService) CreateRating(bookID string, heartScore float64, pooScore float64) (*Rating, error) {
+	rating, err := newRating(bookID, heartScore, pooScore)
+	return rating, err
 }
