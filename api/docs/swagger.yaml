@@ -1,9 +1,43 @@
 basePath: /api
+definitions:
+  books.BookListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/books.BookResponse'
+        type: array
+    type: object
+  books.BookResponse:
+    properties:
+      author_id:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
   description: This is the API that will change the world
   title: BS Books API
   version: "1.0"
-paths: {}
+paths:
+  /books:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all books
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/books.BookListResponse'
+            type: array
+      summary: Get list of books
+      tags:
+      - books
 swagger: "2.0"

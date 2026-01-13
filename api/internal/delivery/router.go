@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"bs-books-api/internal/books"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -8,7 +9,9 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func NewRouter() *gin.Engine {
+func NewRouter(
+	bookHandler *books.BookHandler,
+) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
@@ -22,6 +25,11 @@ func NewRouter() *gin.Engine {
 			"status": "ok",
 		})
 	})
+
+	books := api.Group("/books")
+	{
+		books.GET("", bookHandler.GetBooks)
+	}
 
 	return r
 }

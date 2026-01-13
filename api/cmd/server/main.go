@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bs-books-api/internal/books"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
 	"context"
@@ -30,7 +31,9 @@ func main() {
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	r := delivery.NewRouter()
+	bookHandler := books.NewBookHandler()
+
+	r := delivery.NewRouter(bookHandler)
 
 	srv := &http.Server{
 		Addr:    ":8080",
