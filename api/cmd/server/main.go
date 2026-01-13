@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
+	"bs-books-api/internal/ratings"
 	"context"
 	"fmt"
 	"log"
@@ -33,7 +34,10 @@ func main() {
 
 	bookHandler := books.NewBookHandler()
 
-	r := delivery.NewRouter(bookHandler)
+	ratingService := ratings.NewRatingService()
+	ratingHandler := ratings.NewRatingHandler(ratingService)
+
+	r := delivery.NewRouter(bookHandler, ratingHandler)
 
 	srv := &http.Server{
 		Addr:    ":8080",

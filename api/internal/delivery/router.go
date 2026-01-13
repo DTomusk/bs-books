@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/ratings"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +12,7 @@ import (
 
 func NewRouter(
 	bookHandler *books.BookHandler,
+	ratingHandler *ratings.RatingHandler,
 ) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -29,6 +31,11 @@ func NewRouter(
 	books := api.Group("/books")
 	{
 		books.GET("", bookHandler.GetBooks)
+	}
+
+	ratings := api.Group("/ratings")
+	{
+		ratings.POST("", ratingHandler.CreateRating)
 	}
 
 	return r

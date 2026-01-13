@@ -40,6 +40,37 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/ratings": {
+            "post": {
+                "description": "Create a new rating for a book",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ratings"
+                ],
+                "summary": "Create a new rating",
+                "parameters": [
+                    {
+                        "description": "Rating to create",
+                        "name": "rating",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ratings.RatingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -65,6 +96,20 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "ratings.RatingRequest": {
+            "type": "object",
+            "properties": {
+                "book_id": {
+                    "type": "string"
+                },
+                "heart_score": {
+                    "type": "integer"
+                },
+                "poo_score": {
+                    "type": "integer"
                 }
             }
         }

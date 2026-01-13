@@ -16,6 +16,15 @@ definitions:
       title:
         type: string
     type: object
+  ratings.RatingRequest:
+    properties:
+      book_id:
+        type: string
+      heart_score:
+        type: integer
+      poo_score:
+        type: integer
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -40,4 +49,24 @@ paths:
       summary: Get list of books
       tags:
       - books
+  /ratings:
+    post:
+      consumes:
+      - application/json
+      description: Create a new rating for a book
+      parameters:
+      - description: Rating to create
+        in: body
+        name: rating
+        required: true
+        schema:
+          $ref: '#/definitions/ratings.RatingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      summary: Create a new rating
+      tags:
+      - ratings
 swagger: "2.0"
