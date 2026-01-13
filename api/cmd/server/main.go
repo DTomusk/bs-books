@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	_ "bs-books-api/docs"
 )
@@ -22,15 +22,22 @@ import (
 // @host localhost:8080
 // @BasePath /api
 func main() {
+	// Load env variables
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		fmt.Println("Error loading config:", err)
 		return
 	}
+
+	// TODO: remove
 	fmt.Println("Database URL:", cfg.DB_URL)
 
-	_, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
 
 	bookHandler := books.NewBookHandler()
 
@@ -51,14 +58,13 @@ func main() {
 		}
 	}()
 
-	quitCh := make(chan os.Signal, 1)
-	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
-	<-quitCh
+	<-ctx.Done()
 	log.Println("Shutting down server...")
 
-	cancel()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	if err := srv.Shutdown(context.Background()); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 

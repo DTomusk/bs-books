@@ -22,6 +22,11 @@ Note: all commands like the above should be run from the api directory
 
 When you run `swag init`, it might create a left and right delim property in docs.go that cause an error. These are safe to be deleted, I'm not sure why they show up. One for the tech debt backlog.
 
+### Migrate 
+Migrations are applied using the migrate tool in `docker-compose.yml`. You can call the same command on any database you like to apply the migrations from the project.
+
+Migrations are stored in `/migrations`. They are numbered sequentially and each migration has an up and a down. 
+
 #### Annotation
 For endpoints to appear in the Swagger UI, they have to be annotated and the docs need to be regenerated. See books/handler for an example of annotation. 
 
