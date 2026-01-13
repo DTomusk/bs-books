@@ -2,6 +2,7 @@ package main
 
 import (
 	"bs-books-api/internal/config"
+	"bs-books-api/internal/delivery"
 	"context"
 	"fmt"
 	"log"
@@ -10,9 +11,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gin-gonic/gin"
+	_ "bs-books-api/docs"
 )
 
+// @title BS Books API
+// @version 1.0
+// @description This is the API that will change the world
+// @host localhost:8080
+// @BasePath /api
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -24,11 +30,7 @@ func main() {
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	r := gin.New()
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-
-	setupRoutes(r)
+	r := delivery.NewRouter()
 
 	srv := &http.Server{
 		Addr:    ":8080",
@@ -54,12 +56,4 @@ func main() {
 	}
 
 	log.Println("Server exiting")
-}
-
-func setupRoutes(r *gin.Engine) {
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
 }
