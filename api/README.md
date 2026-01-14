@@ -35,6 +35,9 @@ Migrations are stored in `/migrations`. They are numbered sequentially and each 
 ### Automated testing 
 Automated API tests are run with the `go test` command. There's a test runner in the docker-compose file that runs the same command on a test database. As mentioned elsewhere, unit tests should run against a real database, so we don't need to mock dependencies (at least for now, there will likely be stuff we have to mock in the future).
 
+#### Future improvement 
+We may choose to use go testcontainers in the future to run our automated tests in isolated containers. For now, a db in docker should be sufficient for our needs. 
+
 ## Architecture
 The API is divided into a number of packages which are largely flat. Each core entity has its own package, e.g. Books, Ratings, Reviews, Authors, Users. Each of these packages contains the entities themselves, the persistence details (repos), orchestration (services), and delivery (route handlers). 
 
@@ -43,3 +46,31 @@ There are also a number of supplementary packages for config (which is read from
 Interfaces should only be used when there is likely to be variation. This probably won't happen often, so it's alright for e.g. services to depend on concrete repos. 
 
 With the lack of interfaces, there won't be much mocking. Unit tests and integration tests can be run with a testing database via a test runner in docker (once we've set that up).
+
+### Folder structure 
+Below is the canonical folder structure for an aggregate root (e.g. books, users, ratings), but also for 
+
+#### Handlers 
+These are the entry points to the server. Their responsibility is ensuring that requests are parsed correctly and responses are formatted correctly. They delegate all business logic conerns to services. A handler should ideally only depend on one service. 
+
+#### Services 
+Services orchestrate business logic. Services can depend on other services, e.g. an auth service may have a function to register a user. Because it's a security concern, /auth should be the entry point, but actually creating a user entity and persisting it is not an auth concern, that should be handled by the user service. So, the auth service can depend on the user service, the registration endpoint can call the user service to create the actual user (including ensuring uniqueness of emails and so on), but auth should handle security concerns such as password hashing and generating tokens. 
+
+#### Repos
+Repos define how data is persisted. This will usually be in our Postgres DB, but that detail shouldn't matter to the rest of the application. Repos should be private, services outside of a package shouldn't be calling repos directly (we can make sure of this by setting the first letter of a repo struct to lowercase, e.g. ratingRepo). 
+
+#### Entities
+Entities are the things the application reasons about. Business logic is carried out on entities. Each entity has a UUID as its identifier. Note: the way that data is persisted may not match one-to-one with the actual entity definitions. 
+
+#### Queries 
+Queries are organisationally separated from domain services and repos. The reason for this is that the system is likely going to be doing a great deal many more reads than writes. Reads should be fast and can take data from across bounded contexts, whereas writes require heavy validation. If we get the writing right, then we don't need to validate data in reads. This is basically CQRS but without all the faff that generally goes into it. 
+
+#### DTOs
+DTOs (data transfer objects) are specific views of data that are useful for consumers of the API but don't match the entity definitions exactly. For example, you might have a DTO for a review. This may contain the scores for the rating associated with the review and the username of the user who posted it, both of which aren't in the Review entity definition but are aggregated for the use of consumers (mainly the frontend). 
+
+#### Side effects
+An endpoint will either retrieve data or mutate state, but the use case might have side effects. For example, when a rating is created, the service will ensure that the rating entity is created and persisted, but we'll also want the average score of the book to be recalculated. That mutation is a side effect and shouldn't be handled in the main flow. Rather, an event should be raised that gets processed in the background. 
+
+An example of how we might do this is a transactional outbox. We have an events table in the db that gets polled by a worker. Events have a processed flag, so if the worker finds any unprocessed events, it will process that event and set the processed flag in a transaction. That ensures eventual consistency and means we don't lose data if for some reason the worker can't commit in progress changes. 
+
+There may be other cases where we need side effects handled in a timely manner. In those cases, we may use a message queue so instead of relying on polling, the event gets picked up from the queue. 

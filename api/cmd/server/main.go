@@ -52,7 +52,8 @@ func main() {
 	// DI for routes
 	bookHandler := books.NewBookHandler()
 
-	ratingService := ratings.NewRatingService()
+	ratingRepo := ratings.NewRatingRepo()
+	ratingService := ratings.NewRatingService(ratingRepo)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
 	r := delivery.NewRouter(bookHandler, ratingHandler)

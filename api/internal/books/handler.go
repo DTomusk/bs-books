@@ -2,6 +2,7 @@ package books
 
 import (
 	"bs-books-api/internal/delivery/response"
+	"bs-books-api/internal/queries"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,11 +22,7 @@ func NewBookHandler() *BookHandler {
 // @Success 200 {array} BookListResponse
 // @Router /books [get]
 func (h *BookHandler) GetBooks(ctx *gin.Context) {
-	books := []*Book{
-		{ID: "1", Title: "Book 1", AuthorID: "1"},
-		{ID: "2", Title: "Book 2", AuthorID: "2"},
-		{ID: "3", Title: "Book 3", AuthorID: "3"},
-	}
-	bookDTOs := ToBookResponses(books)
-	ctx.JSON(200, response.Success[[]*BookResponse]{Data: bookDTOs})
+	// TODO: Pass actual db transaction
+	bookDTOs := queries.GetAllBooksQuery(nil)
+	ctx.JSON(200, response.Success[[]*queries.BookResponse]{Data: bookDTOs})
 }

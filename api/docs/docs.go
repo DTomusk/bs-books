@@ -75,17 +75,18 @@ const docTemplate = `{
     },
     "definitions": {
         "books.BookListResponse": {
+            "description": "Response containing a list of books",
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/books.BookResponse"
+                        "$ref": "#/definitions/queries.BookResponse"
                     }
                 }
             }
         },
-        "books.BookResponse": {
+        "queries.BookResponse": {
             "type": "object",
             "properties": {
                 "author_id": {
@@ -106,10 +107,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "heart_score": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "poo_score": {
-                    "type": "integer"
+                    "type": "number"
                 }
             }
         }

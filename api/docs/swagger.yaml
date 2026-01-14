@@ -1,13 +1,14 @@
 basePath: /api
 definitions:
   books.BookListResponse:
+    description: Response containing a list of books
     properties:
       data:
         items:
-          $ref: '#/definitions/books.BookResponse'
+          $ref: '#/definitions/queries.BookResponse'
         type: array
     type: object
-  books.BookResponse:
+  queries.BookResponse:
     properties:
       author_id:
         type: string
@@ -21,9 +22,9 @@ definitions:
       book_id:
         type: string
       heart_score:
-        type: integer
+        type: number
       poo_score:
-        type: integer
+        type: number
     type: object
 host: localhost:8080
 info:

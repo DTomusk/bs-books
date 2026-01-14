@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCreateRecipe(t *testing.T) {
+func TestCreateRating(t *testing.T) {
 	r := NewRatingRepo()
 
 	testutil.WithTx(t, func(tx *sql.Tx) {
@@ -23,7 +23,7 @@ func TestCreateRecipe(t *testing.T) {
 			t.Fatalf("Failed to create rating entity: %v", err)
 		}
 
-		err = r.Create(rating, ctx, tx)
+		err = r.create(rating, ctx, tx)
 		if err != nil {
 			t.Fatalf("Failed to create rating: %v", err)
 		}
