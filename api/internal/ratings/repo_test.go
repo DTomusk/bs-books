@@ -11,10 +11,13 @@ func TestCreateRating(t *testing.T) {
 	r := NewRatingRepo()
 
 	testutil.WithTx(t, func(tx *sql.Tx) {
+		testutil.SeedAuthors(tx)
+		testutil.SeedBooks(tx)
+
 		ctx := context.Background()
 
 		rating, err := newRating(
-			"43681e21-08d4-43e1-b0b6-8d6f75a9b8b1",
+			"23681e21-08d4-43e1-b0b6-8d6f75a9b8b3",
 			4.5,
 			2.0,
 		)
