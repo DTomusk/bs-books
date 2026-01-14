@@ -31,7 +31,7 @@ func (h *RatingHandler) CreateRating(ctx *gin.Context) {
 		return
 	}
 
-	_, err := h.service.CreateRating(req.BookID, req.HeartScore, req.PooScore)
+	_, err := h.service.CreateRating(req.BookID, req.HeartScore, req.PooScore, ctx.Request.Context())
 
 	switch err {
 	case ErrNegativeScore, ErrLargeScore:

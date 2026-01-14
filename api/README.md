@@ -59,6 +59,11 @@ Services orchestrate business logic. Services can depend on other services, e.g.
 #### Repos
 Repos define how data is persisted. This will usually be in our Postgres DB, but that detail shouldn't matter to the rest of the application. Repos should be private, services outside of a package shouldn't be calling repos directly (we can make sure of this by setting the first letter of a repo struct to lowercase, e.g. ratingRepo). 
 
+##### A note about db
+We have an interface called DBTX which represents the shape of a query both in and out of the context of a transaction. What this means is that a service can coordinate transactions while repos always just execute queries. Repos shouldn't know about transactions. 
+
+In terms of di, handlers should not know about db as that's a persistence detail and handlers are a transport detail. Services need to know about db in order to start, commit and roll back transactions, but they never call queries themselves. Repos (and readers) are the only things that execute queries. Repos must be passed a db from the service in case they're called from within a transaction, whereas readers own their own db connection as they never run transactions. 
+
 #### Entities
 Entities are the things the application reasons about. Business logic is carried out on entities. Each entity has a UUID as its identifier. Note: the way that data is persisted may not match one-to-one with the actual entity definitions. 
 

@@ -7,10 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type BookHandler struct{}
+type BookHandler struct {
+	reader *queries.BookReader
+}
 
-func NewBookHandler() *BookHandler {
-	return &BookHandler{}
+func NewBookHandler(r *queries.BookReader) *BookHandler {
+	return &BookHandler{reader: r}
 }
 
 // GetBooks godoc
@@ -22,7 +24,10 @@ func NewBookHandler() *BookHandler {
 // @Success 200 {array} BookListResponse
 // @Router /books [get]
 func (h *BookHandler) GetBooks(ctx *gin.Context) {
-	// TODO: Pass actual db transaction
-	bookDTOs := queries.GetAllBooksQuery(nil)
+	bookDTOs, err := h.reader.GetAllBooksQuery(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(500, response.NewError("internal_error", "Failed to retrieve books"))
+		return
+	}
 	ctx.JSON(200, response.Success[[]*queries.BookResponse]{Data: bookDTOs})
 }

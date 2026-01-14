@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
+	"bs-books-api/internal/queries"
 	"bs-books-api/internal/ratings"
 	"context"
 	"database/sql"
@@ -50,10 +51,11 @@ func main() {
 	defer stop()
 
 	// DI for routes
-	bookHandler := books.NewBookHandler()
+	bookReader := queries.NewBookReader(db)
+	bookHandler := books.NewBookHandler(bookReader)
 
 	ratingRepo := ratings.NewRatingRepo()
-	ratingService := ratings.NewRatingService(ratingRepo)
+	ratingService := ratings.NewRatingService(db, ratingRepo)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
 	r := delivery.NewRouter(bookHandler, ratingHandler)
