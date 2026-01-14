@@ -24,7 +24,6 @@ func (s *RatingService) CreateRating(bookID string, heartScore float64, pooScore
 		return nil, err
 	}
 
-	// TODO: Pass actual context and db transaction
 	err = s.repo.create(rating, ctx, s.db)
 
 	return rating, err

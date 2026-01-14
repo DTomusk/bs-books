@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCreateRating(t *testing.T) {
+func TestRepoCreateRating(t *testing.T) {
 	r := NewRatingRepo()
 
 	testutil.WithTx(t, func(tx *sql.Tx) {
