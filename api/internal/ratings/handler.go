@@ -23,26 +23,27 @@ func NewRatingHandler(service *RatingService) *RatingHandler {
 // @Param rating body RatingRequest true "Rating to create"
 // @Success 201
 // @Router /ratings [post]
-func (h *RatingHandler) CreateRating(ctx *gin.Context) {
+func (h *RatingHandler) CreateRating(c *gin.Context) {
+	ctx := c.Request.Context()
 	var req RatingRequest
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, response.ErrInvalidRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, response.ErrInvalidRequest)
 		return
 	}
 
-	_, err := h.service.CreateRating(req.BookID, req.HeartScore, req.PooScore, ctx.Request.Context())
+	_, err := h.service.CreateRating(req.BookID, req.HeartScore, req.PooScore, ctx)
 
 	switch err {
 	case ErrNegativeScore, ErrLargeScore:
-		ctx.JSON(400, response.NewError("invalid_score", err.Error()))
+		c.JSON(400, response.NewError("invalid_score", err.Error()))
 		return
 	}
 
 	if err != nil {
-		ctx.JSON(500, response.NewError("internal_error", "Failed to create rating"))
+		c.JSON(500, response.NewError("internal_error", "Failed to create rating"))
 		return
 	}
 
-	ctx.JSON(201, response.Ok())
+	c.JSON(201, response.Ok())
 }

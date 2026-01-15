@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bs-books-api/internal/auth"
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
@@ -51,6 +52,8 @@ func main() {
 	defer stop()
 
 	// DI for routes
+	authHandler := auth.NewAuthHandler()
+
 	bookReader := queries.NewBookReader(db)
 	bookHandler := books.NewBookHandler(bookReader)
 
@@ -58,7 +61,7 @@ func main() {
 	ratingService := ratings.NewRatingService(db, ratingRepo)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
-	r := delivery.NewRouter(bookHandler, ratingHandler)
+	r := delivery.NewRouter(authHandler, bookHandler, ratingHandler)
 
 	srv := &http.Server{
 		Addr:    ":8080",
