@@ -7,9 +7,8 @@ services:
       POSTGRES_DB: bs_books_test
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d bs_books_test"]
-      interval: 10s
-      retries: 5
-    # Optional: explicitly run Postgres in foreground
+      interval: 2s
+      retries: 10
     command: ["postgres", "-c", "fsync=off"]
     volumes:
       - db_test_data:/var/lib/postgresql
@@ -33,10 +32,7 @@ services:
       dockerfile: ./cmd/server/Dockerfile
       target: test
     depends_on:
-      db_test:
-        condition: service_healthy
-      migrate_test:
-        condition: service_completed_successfully
+      - migrate_test
     environment:
       TEST_DB_URL: postgres://user:password@db_test:5432/bs_books_test?sslmode=disable
     command: ["go", "test", "./internal/...", "-v"]
