@@ -8,6 +8,7 @@ import (
 )
 
 func TestRepoCreateRating(t *testing.T) {
+	// Arrange
 	r := NewRatingRepo()
 
 	testutil.WithTx(t, func(tx *sql.Tx) {
@@ -16,12 +17,14 @@ func TestRepoCreateRating(t *testing.T) {
 
 		ctx := context.Background()
 
+		// Act
 		rating, err := newRating(
 			"23681e21-08d4-43e1-b0b6-8d6f75a9b8b3",
 			4.5,
 			2.0,
 		)
 
+		// Assert
 		if err != nil {
 			t.Fatalf("Failed to create rating entity: %v", err)
 		}

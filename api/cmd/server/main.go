@@ -7,6 +7,7 @@ import (
 	"bs-books-api/internal/delivery"
 	"bs-books-api/internal/queries"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/users"
 	"context"
 	"database/sql"
 	"fmt"
@@ -52,7 +53,11 @@ func main() {
 	defer stop()
 
 	// DI for routes
-	authHandler := auth.NewAuthHandler()
+	userRepo := users.NewUserRepo()
+	userService := users.NewUserService(db, userRepo)
+
+	authService := auth.NewAuthService(db, userService)
+	authHandler := auth.NewAuthHandler(authService)
 
 	bookReader := queries.NewBookReader(db)
 	bookHandler := books.NewBookHandler(bookReader)
