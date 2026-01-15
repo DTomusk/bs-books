@@ -23,11 +23,12 @@ func NewBookHandler(r *queries.BookReader) *BookHandler {
 // @Produce  json
 // @Success 200 {array} BookListResponse
 // @Router /books [get]
-func (h *BookHandler) GetBooks(ctx *gin.Context) {
-	bookDTOs, err := h.reader.GetAllBooksQuery(ctx.Request.Context())
+func (h *BookHandler) GetBooks(c *gin.Context) {
+	ctx := c.Request.Context()
+	bookDTOs, err := h.reader.GetAllBooksQuery(ctx)
 	if err != nil {
-		ctx.JSON(500, response.NewError("internal_error", "Failed to retrieve books"))
+		c.JSON(500, response.NewError("internal_error", "Failed to retrieve books"))
 		return
 	}
-	ctx.JSON(200, response.Success[[]*queries.BookResponse]{Data: bookDTOs})
+	c.JSON(200, response.Success[[]*queries.BookResponse]{Data: bookDTOs})
 }

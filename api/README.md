@@ -53,6 +53,8 @@ Below is the canonical folder structure for an aggregate root (e.g. books, users
 #### Handlers 
 These are the entry points to the server. Their responsibility is ensuring that requests are parsed correctly and responses are formatted correctly. They delegate all business logic conerns to services. A handler should ideally only depend on one service. 
 
+A package should define its own errors. The handler is responsible for setting the http code for these errors (as the service shouldn't know about http). Auth has an example of using a switch statement to determine the codes for concrete errors that the service can throw. 
+
 #### Services 
 Services orchestrate business logic. Services can depend on other services, e.g. an auth service may have a function to register a user. Because it's a security concern, /auth should be the entry point, but actually creating a user entity and persisting it is not an auth concern, that should be handled by the user service. So, the auth service can depend on the user service, the registration endpoint can call the user service to create the actual user (including ensuring uniqueness of emails and so on), but auth should handle security concerns such as password hashing and generating tokens. 
 

@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"bs-books-api/internal/auth"
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/ratings"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 )
 
 func NewRouter(
+	authHandler *auth.AuthHandler,
 	bookHandler *books.BookHandler,
 	ratingHandler *ratings.RatingHandler,
 ) *gin.Engine {
@@ -27,6 +29,11 @@ func NewRouter(
 			"status": "ok",
 		})
 	})
+
+	auth := api.Group("/auth")
+	{
+		auth.POST("/register", authHandler.Register)
+	}
 
 	books := api.Group("/books")
 	{
