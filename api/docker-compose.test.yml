@@ -1,28 +1,26 @@
+version: "3.9"
+
 services:
   db_test:
-    image: postgres:17.5
+    image: postgres:18.1
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bs_books_test
+    volumes:
+      - db_test_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d bs_books_test"]
       interval: 2s
-      retries: 10
-    command: ["postgres", "-c", "fsync=off"]
-    volumes:
-      - db_test_data:/var/lib/postgresql/data
+      retries: 20
 
   migrate_test:
     image: migrate/migrate:v4.19.1
     depends_on:
-      db_test:
-        condition: service_healthy
-    command: [
-      "-path", "/migrations",
-      "-database", "postgres://user:password@db_test:5432/bs_books_test?sslmode=disable",
-      "up"
-    ]
+      - db_test
+    command: >
+      sh -c "until pg_isready -h db_test -U user; do sleep 1; done &&
+             migrate -path /migrations -database postgres://user:password@db_test:5432/bs_books_test?sslmode=disable up"
     volumes:
       - ./migrations:/migrations
 
@@ -35,7 +33,9 @@ services:
       - migrate_test
     environment:
       TEST_DB_URL: postgres://user:password@db_test:5432/bs_books_test?sslmode=disable
-    command: ["go", "test", "./internal/...", "-v"]
+    command: >
+      sh -c "until pg_isready -h db_test -U user; do sleep 1; done &&
+             go test ./internal/... -v"
 
 volumes:
   db_test_data:
