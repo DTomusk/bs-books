@@ -4,8 +4,6 @@ import (
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/users"
 	"context"
-	"net/mail"
-	"strings"
 )
 
 type AuthService struct {
@@ -49,22 +47,21 @@ func (s *AuthService) Register(ctx context.Context, email, password string) erro
 	return err
 }
 
-func validateEmail(email string) error {
-	addr, err := mail.ParseAddress(email)
+func (s *AuthService) Login(ctx context.Context, email, password string) error {
+	user, err := s.userService.GetUserByEmail(email, ctx)
 	if err != nil {
-		return ErrInvalidEmail
+		return err
 	}
 
-	parts := strings.Split(addr.Address, "@")
-	if len(parts) != 2 {
-		return ErrInvalidEmail
+	if user == nil {
+		return ErrInvalidCredentials
 	}
 
-	domain := parts[1]
-
-	if !strings.Contains(domain, ".") {
-		return ErrInvalidEmail
+	if err := comparePassword(user.PasswordHash, password); err != nil {
+		return ErrInvalidCredentials
 	}
+
+	// TODO: generate and return JWT token
 
 	return nil
 }

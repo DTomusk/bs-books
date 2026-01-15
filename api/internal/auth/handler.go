@@ -52,3 +52,23 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	// TODO: login on successful registration
 	c.JSON(201, response.Ok())
 }
+
+func (h *AuthHandler) Login(c *gin.Context) {
+	ctx := c.Request.Context()
+	var req AuthLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, response.ErrInvalidRequest)
+		return
+	}
+
+	err := h.service.Login(ctx, req.Email, req.Password)
+	if err != nil {
+		switch err {
+		case ErrInvalidCredentials:
+			c.JSON(401, response.NewError("invalid_credentials", err.Error()))
+			return
+		}
+		c.JSON(500, response.NewError("internal_error", err.Error()))
+		return
+	}
+}
