@@ -9,6 +9,10 @@ services:
       test: ["CMD-SHELL", "pg_isready -U user -d bs_books_test"]
       interval: 10s
       retries: 5
+    # Optional: explicitly run Postgres in foreground
+    command: ["postgres", "-c", "fsync=off"]
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
 
   migrate_test:
     image: migrate/migrate:v4.19.1
@@ -36,3 +40,6 @@ services:
     environment:
       TEST_DB_URL: postgres://user:password@db_test:5432/bs_books_test?sslmode=disable
     command: ["go", "test", "./internal/...", "-v"]
+
+volumes:
+  db_test_data:
