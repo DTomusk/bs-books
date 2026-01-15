@@ -15,29 +15,31 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-    
-            - name: Set up Docker Compose
-              uses: docker/setup-buildx-action@v3
-
-            - name: Cache Docker layers
-              uses: actions/cache@v4
-              with:
-                path: /tmp/.buildx-cache
-                key: ${{ runner.os }}-buildx-${{ github.sha }}
-                restore-keys: |
-                  ${{ runner.os }}-buildx-
-    
-            - name: Run tests with Docker Compose
+            - name: Start Postgres
               run: |
-                docker compose \
-                -f api/docker-compose.test.yml \
-                up \
-                --build \
-                --exit-code-from test_runner
+                docker run -d --name db_test \
+                -e POSTGRES_USER=user \
+                -e POSTGRES_PASSWORD=password \
+                -e POSTGRES_DB=bs_books_test \
+                -p 5432:5432 \
+                postgres:18.1
 
-            - name: Tear down Docker Compose
-              if: always()
+            - name: Wait for Postgres
               run: |
-                    docker compose -f api/docker-compose.test.yml down -v
+                until docker exec db_test pg_isready -U user -d bs_books_test; do sleep 1; done
+
+            - name: Run migrations
+              run: |
+                docker run --rm --network host \
+                -v ${{ github.workspace }}/migrations:/migrations \
+                migrate/migrate:v4.19.1 \
+                -path /migrations \
+                -database postgres://user:password@localhost:5432/bs_books_test?sslmode=disable up
+
+            - name: Run tests
+              run: |
+                docker build --target test -t api_test ./cmd/server
+                docker run --rm --network host -e TEST_DB_URL=postgres://user:password@localhost:5432/bs_books_test?sslmode=disable api_test go test ./internal/... -v
+
+            - name: Tear down Postgres
+              run: docker rm -f db_test
