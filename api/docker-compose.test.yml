@@ -12,7 +12,7 @@ services:
     # Optional: explicitly run Postgres in foreground
     command: ["postgres", "-c", "fsync=off"]
     volumes:
-      - db_test_data:/var/lib/postgresql/data
+      - db_test_data:/var/lib/postgresql
 
   migrate_test:
     image: migrate/migrate:v4.19.1
