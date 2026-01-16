@@ -56,7 +56,8 @@ func main() {
 	userRepo := users.NewUserRepo()
 	userService := users.NewUserService(db, userRepo)
 
-	authService := auth.NewAuthService(db, userService)
+	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
+	authService := auth.NewAuthService(db, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
 	bookReader := queries.NewBookReader(db)

@@ -12,7 +12,8 @@ func TestRegister_Success(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		userService := users.NewUserService(tx, users.NewUserRepo())
-		testService := NewAuthService(tx, userService)
+		jwtService := NewJWTService("test_secret_key", 15)
+		testService := NewAuthService(tx, userService, jwtService)
 		ctx := context.Background()
 
 		// Act
@@ -30,7 +31,7 @@ func TestRegister_Success(t *testing.T) {
 // Test weak password
 func TestRegister_WeakPassword(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
-		testService := NewAuthService(tx, nil)
+		testService := NewAuthService(tx, nil, nil)
 		ctx := context.Background()
 		err := testService.Register(ctx, "blah@mail.com", "123")
 		if err == nil {

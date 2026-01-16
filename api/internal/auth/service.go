@@ -9,12 +9,14 @@ import (
 type AuthService struct {
 	db          db.DBTX
 	userService *users.UserService
+	jwtService  *jwtService
 }
 
-func NewAuthService(db db.DBTX, userService *users.UserService) *AuthService {
+func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *jwtService) *AuthService {
 	return &AuthService{
 		db:          db,
 		userService: userService,
+		jwtService:  jwtService,
 	}
 }
 
@@ -47,21 +49,25 @@ func (s *AuthService) Register(ctx context.Context, email, password string) erro
 	return err
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) error {
+func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {
 	user, err := s.userService.GetUserByEmail(email, ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if user == nil {
-		return ErrInvalidCredentials
+		return "", ErrInvalidCredentials
 	}
 
 	if err := comparePassword(user.PasswordHash, password); err != nil {
-		return ErrInvalidCredentials
+		return "", ErrInvalidCredentials
 	}
 
 	// TODO: generate and return JWT token
+	token, err := s.jwtService.generateJWT(user.ID)
+	if err != nil {
+		return "", err
+	}
 
-	return nil
+	return token, nil
 }
