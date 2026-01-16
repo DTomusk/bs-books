@@ -8,4 +8,5 @@ var (
 	ErrInvalidEmail       = fmt.Errorf("invalid email address")
 	ErrEmailAlreadyInUse  = fmt.Errorf("email already in use")
 	ErrInvalidCredentials = fmt.Errorf("invalid email or password")
+	ErrInvalidToken       = fmt.Errorf("invalid token")
 )

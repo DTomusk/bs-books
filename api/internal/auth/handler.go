@@ -60,6 +60,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param login body AuthLoginRequest true "Login Request"
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	ctx := c.Request.Context()
 	var req AuthLoginRequest
