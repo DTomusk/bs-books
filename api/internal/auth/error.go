@@ -9,4 +9,6 @@ var (
 	ErrEmailAlreadyInUse  = fmt.Errorf("email already in use")
 	ErrInvalidCredentials = fmt.Errorf("invalid email or password")
 	ErrInvalidToken       = fmt.Errorf("invalid token")
+	ErrMissingAuthHeader  = fmt.Errorf("missing authorization header")
+	ErrInvalidAuthHeader  = fmt.Errorf("invalid authorization header format")
 )

@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type jwtService struct {
+type JWTService struct {
 	secretKey            string
 	tokenLifetimeMinutes int
 }
@@ -16,14 +16,14 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTService(secretKey string, tokenLifetimeMinutes int) *jwtService {
-	return &jwtService{
+func NewJWTService(secretKey string, tokenLifetimeMinutes int) *JWTService {
+	return &JWTService{
 		secretKey:            secretKey,
 		tokenLifetimeMinutes: tokenLifetimeMinutes,
 	}
 }
 
-func (s *jwtService) generateJWT(userID string) (string, error) {
+func (s *JWTService) generateJWT(userID string) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -38,7 +38,7 @@ func (s *jwtService) generateJWT(userID string) (string, error) {
 	return token.SignedString([]byte(s.secretKey))
 }
 
-func (s *jwtService) parseJWT(tokenString string) (*Claims, error) {
+func (s *JWTService) parseJWT(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 
 	token, err := jwt.ParseWithClaims(

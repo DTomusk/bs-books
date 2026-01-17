@@ -55,6 +55,7 @@ func main() {
 	// DI for routes
 	userRepo := users.NewUserRepo()
 	userService := users.NewUserService(db, userRepo)
+	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
 	authService := auth.NewAuthService(db, userService, jwtService)
@@ -67,7 +68,13 @@ func main() {
 	ratingService := ratings.NewRatingService(db, ratingRepo)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
-	r := delivery.NewRouter(authHandler, bookHandler, ratingHandler)
+	r := delivery.NewRouter(
+		authHandler,
+		bookHandler,
+		ratingHandler,
+		userHandler,
+		jwtService,
+	)
 
 	srv := &http.Server{
 		Addr:    ":8080",

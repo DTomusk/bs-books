@@ -9,10 +9,10 @@ import (
 type AuthService struct {
 	db          db.DBTX
 	userService *users.UserService
-	jwtService  *jwtService
+	jwtService  *JWTService
 }
 
-func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *jwtService) *AuthService {
+func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *JWTService) *AuthService {
 	return &AuthService{
 		db:          db,
 		userService: userService,
