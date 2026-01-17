@@ -23,7 +23,7 @@ func NewJWTService(secretKey string, tokenLifetimeMinutes int) *JWTService {
 	}
 }
 
-func (s *JWTService) generateJWT(userID string) (string, error) {
+func (s *JWTService) GenerateJWT(userID string) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -38,7 +38,7 @@ func (s *JWTService) generateJWT(userID string) (string, error) {
 	return token.SignedString([]byte(s.secretKey))
 }
 
-func (s *JWTService) parseJWT(tokenString string) (*Claims, error) {
+func (s *JWTService) ParseJWT(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 
 	token, err := jwt.ParseWithClaims(

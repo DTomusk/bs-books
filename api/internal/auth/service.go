@@ -64,7 +64,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 	}
 
 	// TODO: generate and return JWT token
-	token, err := s.jwtService.generateJWT(user.ID)
+	token, err := s.jwtService.GenerateJWT(user.ID)
 	if err != nil {
 		return "", err
 	}

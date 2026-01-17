@@ -76,7 +76,7 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
 func TestAuthMiddleware_ValidToken(t *testing.T) {
 	// Arrange
 	jwtService := NewJWTService("test-secret", 5)
-	token, err := jwtService.generateJWT("user-123")
+	token, err := jwtService.GenerateJWT("user-123")
 	require.NoError(t, err)
 
 	router := setupTestRouter(AuthMiddleware(jwtService))

@@ -21,7 +21,7 @@ func AuthMiddleware(s *JWTService) gin.HandlerFunc {
 
 		tokenString := authHeader[7:]
 
-		claims, err := s.parseJWT(tokenString)
+		claims, err := s.ParseJWT(tokenString)
 		if err != nil {
 			c.AbortWithStatusJSON(401, response.NewError("invalid_token", ErrInvalidToken.Error()))
 			return
