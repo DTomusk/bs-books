@@ -17,6 +17,10 @@ func NewUserService(db db.DBTX, userRepo *userRepo) *UserService {
 	}
 }
 
+func (s *UserService) GetUserByID(id string, ctx context.Context) (*User, error) {
+	return s.userRepo.GetByID(id, ctx, s.db)
+}
+
 func (s *UserService) GetUserByEmail(email string, ctx context.Context) (*User, error) {
 	return s.userRepo.GetByEmail(email, ctx, s.db)
 }

@@ -39,7 +39,7 @@ services:
         condition: service_completed_successfully
     environment:
       TEST_DB_URL: postgres://user:password@db_test:5432/bs_books_test?sslmode=disable
-    command: ["go", "test", "./internal/...", "-v"]
+    command: ["go", "test", "./...", "-v"]
 
 volumes:
   db_test_data:

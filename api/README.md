@@ -27,6 +27,15 @@ For endpoints to appear in the Swagger UI, they have to be annotated and the doc
 
 While all endpoints should return the same shape of data (defined in delivery/response), Swagger doesn't handle go generics, so each package should have a swagger.go file to define the documented concrete type that gets returned by an endpoint. These don't get used in practice, they are purely for documentation. 
 
+#### Auth endpoints 
+Some endpoints rely on the auth middleware to check the logged in user. To mark this in swagger, add
+
+`// @Security BearerAuth`
+
+to the endpoint godoc (in the handler file). This will require the user to have set their authorization in swagger to call the endpoint. 
+
+When logging in via the swagger UI, the format for the token you put in is `Bearer <token>`, rather than simply `<token>`. It's a bit annoying, but it does the job. You can generate a bearer token by calling the log in endpoint with valid credentials (which can be created by calling the register endpoint).
+
 ### Migrate 
 Migrations are applied using the migrate tool in `docker-compose.yml`. You can call the same command on any database you like to apply the migrations from the project.
 
@@ -34,6 +43,10 @@ Migrations are stored in `/migrations`. They are numbered sequentially and each 
 
 ### Automated testing 
 Automated API tests are run with the `go test` command. There's a test runner in the docker-compose file that runs the same command on a test database. As mentioned elsewhere, unit tests should run against a real database, so we don't need to mock dependencies (at least for now, there will likely be stuff we have to mock in the future).
+
+Unit and simple integration tests live next to the code they're testing. This makes it really easy to see what's getting tested where, and means you don't have to worry about mirroring the project structure in a test package elsewhere. 
+
+Complex, multi-stage tests live in `internal_test`. For example, the first test writtne here tested the end-to-end auth flow of registering a user, logging in as that user, and calling a protected endpoint with their JWT. 
 
 #### Future improvement 
 We may choose to use go testcontainers in the future to run our automated tests in isolated containers. For now, a db in docker should be sufficient for our needs. 

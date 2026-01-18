@@ -42,7 +42,7 @@ jobs:
             - name: Run tests
               run: |
                 docker build --target test -t api_test -f api/cmd/server/Dockerfile ./api
-                docker run --rm --network host -e TEST_DB_URL=postgres://user:password@localhost:5432/bs_books_test?sslmode=disable api_test go test ./internal/... -v
+                docker run --rm --network host -e TEST_DB_URL=postgres://user:password@localhost:5432/bs_books_test?sslmode=disable api_test go test ./... -v
 
             - name: Tear down Postgres
               run: docker rm -f db_test

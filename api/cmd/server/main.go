@@ -27,6 +27,10 @@ import (
 // @description This is the API that will change the world
 // @host localhost:8080
 // @BasePath /api
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Enter your JWT token in the format: Bearer <token>
 func main() {
 	// Load env variables
 	cfg, err := config.LoadConfig()
@@ -55,8 +59,10 @@ func main() {
 	// DI for routes
 	userRepo := users.NewUserRepo()
 	userService := users.NewUserService(db, userRepo)
+	userHandler := users.NewUserHandler(userService)
 
-	authService := auth.NewAuthService(db, userService)
+	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
+	authService := auth.NewAuthService(db, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
 	bookReader := queries.NewBookReader(db)
@@ -66,7 +72,13 @@ func main() {
 	ratingService := ratings.NewRatingService(db, ratingRepo)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
-	r := delivery.NewRouter(authHandler, bookHandler, ratingHandler)
+	r := delivery.NewRouter(
+		authHandler,
+		bookHandler,
+		ratingHandler,
+		userHandler,
+		jwtService,
+	)
 
 	srv := &http.Server{
 		Addr:    ":8080",

@@ -1,5 +1,15 @@
 basePath: /api
 definitions:
+  auth.AuthLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   auth.AuthRegisterRequest:
     properties:
       email:
@@ -50,6 +60,13 @@ definitions:
         $ref: '#/definitions/response.Error'
       meta: {}
     type: object
+  users.GetMeResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -57,6 +74,24 @@ info:
   title: BS Books API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user with email and password
+      parameters:
+      - description: Login Request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/auth.AuthLoginRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Login a user
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:
@@ -82,7 +117,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Register a new user
       tags:
-      - Auth
+      - auth
   /books:
     get:
       consumes:
@@ -120,4 +155,35 @@ paths:
       summary: Create a new rating
       tags:
       - ratings
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get the currently authenticated user's information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.GetMeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter your JWT token in the format: Bearer <token>'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

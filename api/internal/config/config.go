@@ -3,10 +3,13 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Config struct {
-	DB_URL string
+	DB_URL                 string
+	JWT_SECRET_KEY         string
+	JWT_EXPIRATION_MINUTES int
 }
 
 var (
@@ -20,7 +23,24 @@ func LoadConfig() (*Config, error) {
 		return nil, ErrMissingDBURL
 	}
 
+	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
+	if jwtSecretKey == "" {
+		return nil, fmt.Errorf("missing JWT_SECRET_KEY environment variable")
+	}
+
+	jwtExpirationMinutesStr := os.Getenv("JWT_EXPIRATION_MINUTES")
+	if jwtExpirationMinutesStr == "" {
+		return nil, fmt.Errorf("missing JWT_EXPIRATION_MINUTES environment variable")
+	}
+
+	jwtExpirationMinutes, err := strconv.Atoi(jwtExpirationMinutesStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid JWT_EXPIRATION_MINUTES value: %v", err)
+	}
+
 	return &Config{
-		DB_URL: dbURL,
+		DB_URL:                 dbURL,
+		JWT_SECRET_KEY:         jwtSecretKey,
+		JWT_EXPIRATION_MINUTES: jwtExpirationMinutes,
 	}, nil
 }

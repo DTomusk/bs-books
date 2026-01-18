@@ -12,6 +12,24 @@ func NewUserRepo() *userRepo {
 	return &userRepo{}
 }
 
+func (r *userRepo) GetByID(id string, ctx context.Context, db db.DBTX) (*User, error) {
+	var user *User
+	row, err := db.QueryContext(ctx, `SELECT id, email, password_hash FROM users WHERE id = $1`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer row.Close()
+
+	if row.Next() {
+		user = &User{}
+		if err := row.Scan(&user.ID, &user.Email, &user.PasswordHash); err != nil {
+			return nil, err
+		}
+		return user, nil
+	}
+	return nil, nil
+}
+
 func (r *userRepo) GetByEmail(email string, ctx context.Context, db db.DBTX) (*User, error) {
 	var user *User
 	row, err := db.QueryContext(ctx, `SELECT id, email, password_hash FROM users WHERE email = $1`, email)

@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/auth"
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/users"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,8 @@ func NewRouter(
 	authHandler *auth.AuthHandler,
 	bookHandler *books.BookHandler,
 	ratingHandler *ratings.RatingHandler,
+	userHandler *users.UserHandler,
+	jwtService *auth.JWTService,
 ) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -30,19 +33,29 @@ func NewRouter(
 		})
 	})
 
-	auth := api.Group("/auth")
+	authRoutes := api.Group("/auth")
 	{
-		auth.POST("/register", authHandler.Register)
+		authRoutes.POST("/register", authHandler.Register)
+		authRoutes.POST("/login", authHandler.Login)
 	}
 
-	books := api.Group("/books")
+	booksRoutes := api.Group("/books")
 	{
-		books.GET("", bookHandler.GetBooks)
+		booksRoutes.GET("", bookHandler.GetBooks)
 	}
 
-	ratings := api.Group("/ratings")
+	ratingsRoutes := api.Group("/ratings")
 	{
-		ratings.POST("", ratingHandler.CreateRating)
+		ratingsRoutes.POST("", ratingHandler.CreateRating)
+	}
+
+	usersRoutes := api.Group("/users")
+	{
+		protected := usersRoutes.Group("")
+		protected.Use(auth.AuthMiddleware(jwtService))
+		{
+			protected.GET("/me", userHandler.GetMe)
+		}
 	}
 
 	return r

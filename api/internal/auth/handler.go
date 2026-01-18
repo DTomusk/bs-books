@@ -19,7 +19,7 @@ func NewAuthHandler(service *AuthService) *AuthHandler {
 // Register godoc
 // @Summary Register a new user
 // @Description Register a new user with email and password
-// @Tags Auth
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param register body AuthRegisterRequest true "Register Request"
@@ -51,4 +51,34 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	// TODO: login on successful registration
 	c.JSON(201, response.Ok())
+}
+
+// Login godoc
+// @Summary Login a user
+// @Description Login a user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body AuthLoginRequest true "Login Request"
+// @Router /auth/login [post]
+func (h *AuthHandler) Login(c *gin.Context) {
+	ctx := c.Request.Context()
+	var req AuthLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, response.ErrInvalidRequest)
+		return
+	}
+
+	token, err := h.service.Login(ctx, req.Email, req.Password)
+	if err != nil {
+		switch err {
+		case ErrInvalidCredentials:
+			c.JSON(401, response.NewError("invalid_credentials", err.Error()))
+			return
+		}
+		c.JSON(500, response.NewInternalServerError(err.Error()))
+		return
+	}
+
+	c.JSON(200, response.Success[string]{Data: token})
 }
