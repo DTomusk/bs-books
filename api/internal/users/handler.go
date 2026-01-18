@@ -16,6 +16,17 @@ func NewUserHandler(service *UserService) *UserHandler {
 	}
 }
 
+// GetMe godoc
+// @Summary Get current user
+// @Description Get the currently authenticated user's information
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Router /users/me [get]
+// @Security BearerAuth
+// @Success 200 {object} GetMeResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
 func (h *UserHandler) GetMe(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID, exists := c.Get("userID")

@@ -27,6 +27,10 @@ import (
 // @description This is the API that will change the world
 // @host localhost:8080
 // @BasePath /api
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Enter your JWT token in the format: Bearer <token>
 func main() {
 	// Load env variables
 	cfg, err := config.LoadConfig()

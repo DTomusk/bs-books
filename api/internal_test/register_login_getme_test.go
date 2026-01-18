@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -40,7 +41,7 @@ func setupAuthRouter(
 
 func TestRegisterLoginMe_Success(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
-		// Arrange
+		// DI
 		jwtService := auth.NewJWTService("test_secret_key", 15)
 		userRepo := users.NewUserRepo()
 		userService := users.NewUserService(tx, userRepo)
@@ -49,40 +50,24 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		router := setupAuthRouter(jwtService, authService, userHandler)
 
 		// 1. Register
-		// Arrange
 		body := []byte(`{
 		"email": "test@example.com",
 		"password": "securepassword"
 		}`)
 
-		registerReq := httptest.NewRequest(
-			"POST",
-			"/api/auth/register",
-			bytes.NewBuffer(body),
-		)
-		registerReq.Header.Set("Content-Type", "application/json")
+		registerReq := jsonRequest("POST", "/api/auth/register", body)
 		registerW := httptest.NewRecorder()
 
-		// Act
 		router.ServeHTTP(registerW, registerReq)
 
-		// Assert
 		require.Equal(t, 201, registerW.Code)
 
 		// 2. Login
-		// Arrange
-		loginReq := httptest.NewRequest(
-			"POST",
-			"/api/auth/login",
-			bytes.NewBuffer(body),
-		)
-		loginReq.Header.Set("Content-Type", "application/json")
+		loginReq := jsonRequest("POST", "/api/auth/login", body)
 		loginW := httptest.NewRecorder()
 
-		// Act
 		router.ServeHTTP(loginW, loginReq)
 
-		// Assert
 		require.Equal(t, 200, loginW.Code)
 
 		var loginResp response.Success[string]
@@ -93,14 +78,12 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		token := loginResp.Data
 
 		// 3. Get Me
-		req := httptest.NewRequest("GET", "/api/users/me", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		meReq := jsonRequest("GET", "/api/users/me", nil)
+		meReq.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()
 
-		// Act
-		router.ServeHTTP(w, req)
+		router.ServeHTTP(w, meReq)
 
-		// Assert
 		require.Equal(t, 200, w.Code)
 
 		var meResp response.Success[users.UserResponse]
@@ -108,4 +91,46 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "test@example.com", meResp.Data.Email)
 	})
+}
+
+func TestGetMe_NoAuthHeader(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		jwtService := auth.NewJWTService("test_secret_key", 15)
+		router := setupAuthRouter(
+			jwtService,
+			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService),
+			users.NewUserHandler(users.NewUserService(tx, users.NewUserRepo())),
+		)
+		meReq := jsonRequest("GET", "/api/users/me", nil)
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, meReq)
+
+		require.Equal(t, 401, w.Code)
+	})
+}
+
+func TestGetMe_InvalidToken(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		jwtService := auth.NewJWTService("test_secret_key", 15)
+		router := setupAuthRouter(
+			jwtService,
+			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService),
+			users.NewUserHandler(users.NewUserService(tx, users.NewUserRepo())),
+		)
+		meReq := jsonRequest("GET", "/api/users/me", nil)
+		meReq.Header.Set("Authorization", "Bearer invalidtoken")
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, meReq)
+
+		require.Equal(t, 401, w.Code)
+	})
+}
+
+// TODO: could move to testutil/somewhere shared
+func jsonRequest(method, path string, body []byte) *http.Request {
+	req := httptest.NewRequest(method, path, bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	return req
 }

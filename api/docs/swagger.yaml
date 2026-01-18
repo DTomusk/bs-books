@@ -60,6 +60,13 @@ definitions:
         $ref: '#/definitions/response.Error'
       meta: {}
     type: object
+  users.GetMeResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -148,4 +155,35 @@ paths:
       summary: Create a new rating
       tags:
       - ratings
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get the currently authenticated user's information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.GetMeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter your JWT token in the format: Bearer <token>'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
