@@ -41,7 +41,7 @@ func (h *RatingHandler) CreateRating(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(500, response.NewError("internal_error", "Failed to create rating"))
+		c.JSON(500, response.NewInternalServerError("Failed to create rating"))
 		return
 	}
 

@@ -27,7 +27,7 @@ func (h *BookHandler) GetBooks(c *gin.Context) {
 	ctx := c.Request.Context()
 	bookDTOs, err := h.reader.GetAllBooksQuery(ctx)
 	if err != nil {
-		c.JSON(500, response.NewError("internal_error", "Failed to retrieve books"))
+		c.JSON(500, response.NewInternalServerError("Failed to retrieve books"))
 		return
 	}
 	c.JSON(200, response.Success[[]*queries.BookResponse]{Data: bookDTOs})

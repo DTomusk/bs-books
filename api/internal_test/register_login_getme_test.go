@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -16,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupUsersMeRouter(
+func setupAuthRouter(
 	jwtService *auth.JWTService,
 	authService *auth.AuthService,
 	userHandler *users.UserHandler,
@@ -47,9 +46,10 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		userService := users.NewUserService(tx, userRepo)
 		userHandler := users.NewUserHandler(userService)
 		authService := auth.NewAuthService(tx, userService, jwtService)
-		router := setupUsersMeRouter(jwtService, authService, userHandler)
+		router := setupAuthRouter(jwtService, authService, userHandler)
 
 		// 1. Register
+		// Arrange
 		body := []byte(`{
 		"email": "test@example.com",
 		"password": "securepassword"
@@ -62,10 +62,15 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		)
 		registerReq.Header.Set("Content-Type", "application/json")
 		registerW := httptest.NewRecorder()
+
+		// Act
 		router.ServeHTTP(registerW, registerReq)
+
+		// Assert
 		require.Equal(t, 201, registerW.Code)
 
 		// 2. Login
+		// Arrange
 		loginReq := httptest.NewRequest(
 			"POST",
 			"/api/auth/login",
@@ -73,7 +78,11 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		)
 		loginReq.Header.Set("Content-Type", "application/json")
 		loginW := httptest.NewRecorder()
+
+		// Act
 		router.ServeHTTP(loginW, loginReq)
+
+		// Assert
 		require.Equal(t, 200, loginW.Code)
 
 		var loginResp response.Success[string]
@@ -92,8 +101,11 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		// Assert
-		fmt.Println(w.Body.String())
 		require.Equal(t, 200, w.Code)
-		require.Contains(t, w.Body.String(), "test@example.com")
+
+		var meResp response.Success[users.UserResponse]
+		err = json.Unmarshal(w.Body.Bytes(), &meResp)
+		require.NoError(t, err)
+		require.Equal(t, "test@example.com", meResp.Data.Email)
 	})
 }

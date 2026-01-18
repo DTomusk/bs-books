@@ -76,7 +76,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			c.JSON(401, response.NewError("invalid_credentials", err.Error()))
 			return
 		}
-		c.JSON(500, response.NewError("internal_error", err.Error()))
+		c.JSON(500, response.NewInternalServerError(err.Error()))
 		return
 	}
 
