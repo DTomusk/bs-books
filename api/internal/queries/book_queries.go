@@ -26,7 +26,7 @@ func (r *BookReader) GetAllBooksQuery(ctx context.Context) ([]*BookResponse, err
 			b.title,
 			ba.author_id
 		FROM books b
-		LEFT JOIN book_authors ba ON ba.book_id = b.id
+		LEFT JOIN book_author ba ON ba.book_id = b.id
 		ORDER BY b.id
 	`
 
