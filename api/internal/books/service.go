@@ -37,3 +37,20 @@ func (s *BooksService) processExternalBooks(books []externalBookModel) error {
 	// Then, insert book and author ids into junction table
 	return nil
 }
+
+func extractUniqueAuthors(books []externalBookModel) []string {
+	seen := make(map[string]struct{})
+
+	for _, book := range books {
+		for _, author := range book.Authors {
+			seen[author] = struct{}{}
+		}
+	}
+
+	uniqueAuthors := make([]string, 0, len(seen))
+	for author := range seen {
+		uniqueAuthors = append(uniqueAuthors, author)
+	}
+
+	return uniqueAuthors
+}
