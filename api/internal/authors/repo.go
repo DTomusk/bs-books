@@ -26,11 +26,29 @@ func (r *authorsRepo) getIDByName(name string, ctx context.Context, db db.DBTX) 
 }
 
 func (r *authorsRepo) getIDByNormalisedName(normalisedName string, ctx context.Context, db db.DBTX) (string, error) {
-	return "", nil
+	var id string
+	row := db.QueryRowContext(ctx, `SELECT id FROM authors WHERE normalised_name = $1`, normalisedName)
+	err := row.Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return id, nil
 }
 
 func (r *authorsRepo) getIDByAlias(name string, ctx context.Context, db db.DBTX) (string, error) {
-	return "", nil
+	var authorID string
+	row := db.QueryRowContext(ctx, `SELECT author_id FROM author_alias WHERE alias = $1`, name)
+	err := row.Scan(&authorID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return authorID, nil
 }
 
 func (r *authorsRepo) createAuthor(author *Author, ctx context.Context, db db.DBTX) error {
@@ -39,5 +57,6 @@ func (r *authorsRepo) createAuthor(author *Author, ctx context.Context, db db.DB
 }
 
 func (r *authorsRepo) createAuthorAlias(authorID, aliasName string, ctx context.Context, db db.DBTX) error {
-	return nil
+	_, err := db.ExecContext(ctx, "INSERT INTO author_alias (author_id, alias) VALUES ($1, $2)", authorID, aliasName)
+	return err
 }
