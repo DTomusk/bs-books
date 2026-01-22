@@ -14,27 +14,61 @@ func NewBookReader(db db.DBTX) *BookReader {
 }
 
 type BookResponse struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	AuthorID string `json:"author_id"`
+	ID        string   `json:"id"`
+	Title     string   `json:"title"`
+	AuthorIDs []string `json:"author_ids"`
 }
 
 func (r *BookReader) GetAllBooksQuery(ctx context.Context) ([]*BookResponse, error) {
-	var books []*BookResponse
-	query := "SELECT id, title, author_id FROM books"
+	query := `
+		SELECT
+			b.id,
+			b.title,
+			ba.author_id
+		FROM books b
+		LEFT JOIN book_authors ba ON ba.book_id = b.id
+		ORDER BY b.id
+	`
+
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	booksByID := make(map[string]*BookResponse)
+	var orderedBooks []*BookResponse
+
 	for rows.Next() {
-		var book BookResponse
-		if err := rows.Scan(&book.ID, &book.Title, &book.AuthorID); err != nil {
+		var (
+			bookID   string
+			title    string
+			authorID *string
+		)
+
+		if err := rows.Scan(&bookID, &title, &authorID); err != nil {
 			return nil, err
 		}
-		books = append(books, &book)
+
+		book, exists := booksByID[bookID]
+		if !exists {
+			book = &BookResponse{
+				ID:        bookID,
+				Title:     title,
+				AuthorIDs: []string{},
+			}
+			booksByID[bookID] = book
+			orderedBooks = append(orderedBooks, book)
+		}
+
+		if authorID != nil {
+			book.AuthorIDs = append(book.AuthorIDs, *authorID)
+		}
 	}
 
-	return books, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orderedBooks, nil
 }

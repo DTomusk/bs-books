@@ -85,8 +85,8 @@ func mapGoogleToExternal(googleBooks []googleVolume) []externalBookModel {
 
 	for _, g := range googleBooks {
 		books = append(books, externalBookModel{
-			Title:  g.VolumeInfo.Title,
-			Author: g.VolumeInfo.Authors[0],
+			Title:   g.VolumeInfo.Title,
+			Authors: g.VolumeInfo.Authors,
 		})
 	}
 

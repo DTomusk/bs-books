@@ -47,9 +47,10 @@ func TestMapGoogleToExternal(t *testing.T) {
 	// Assert
 	require.Len(t, externalBooks, 2)
 	require.Equal(t, "Test Book", externalBooks[0].Title)
-	require.Equal(t, "Author One", externalBooks[0].Author)
+	require.Equal(t, "Author One", externalBooks[0].Authors[0])
+	require.Equal(t, "Author Two", externalBooks[0].Authors[1])
 	require.Equal(t, "Another Book", externalBooks[1].Title)
-	require.Equal(t, "Single Author", externalBooks[1].Author)
+	require.Equal(t, "Single Author", externalBooks[1].Authors[0])
 }
 
 func TestSearchBooks(t *testing.T) {
@@ -65,5 +66,5 @@ func TestSearchBooks(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, len(externalBooks), 0)
 	require.NotEmpty(t, externalBooks[0].Title)
-	require.NotEmpty(t, externalBooks[0].Author)
+	require.NotEmpty(t, externalBooks[0].Authors)
 }

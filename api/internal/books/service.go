@@ -18,10 +18,22 @@ func NewBooksService(db db.DBTX, repo *booksRepo, provider BooksProvider) *Books
 
 func (s *BooksService) ExtractExternalBooks(query string) error {
 	// Query external api and extract books into our db
-	_, err := s.provider.SearchBooks(query)
+	books, err := s.provider.SearchBooks(query)
 	if err != nil {
 		return err
 	}
 
+	// Iterate over books and process
+	// Return entities that we can insert into our db and batch insert them later
+	err = s.processExternalBooks(books)
+
+	return nil
+}
+
+func (s *BooksService) processExternalBooks(books []externalBookModel) error {
+	// Get unique authors from books
+	// Send to author service to create any new entities and return a map of author names to IDs
+	// Do the same with books, create books if needed and return their IDs
+	// Then, insert book and author ids into junction table
 	return nil
 }

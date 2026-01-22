@@ -1,7 +1,7 @@
 package books
 
 type Book struct {
-	ID       string
-	Title    string
-	AuthorID string
+	ID        string
+	Title     string
+	AuthorIDs []string
 }
