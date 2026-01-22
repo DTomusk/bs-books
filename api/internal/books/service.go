@@ -1,18 +1,23 @@
 package books
 
-import "bs-books-api/internal/db"
+import (
+	"bs-books-api/internal/authors"
+	"bs-books-api/internal/db"
+)
 
 type BooksService struct {
-	db       db.DBTX
-	repo     *booksRepo
-	provider BooksProvider
+	db            db.DBTX
+	repo          *booksRepo
+	provider      BooksProvider
+	authorService *authors.AuthorsService
 }
 
-func NewBooksService(db db.DBTX, repo *booksRepo, provider BooksProvider) *BooksService {
+func NewBooksService(db db.DBTX, repo *booksRepo, provider BooksProvider, authorService *authors.AuthorsService) *BooksService {
 	return &BooksService{
-		db:       db,
-		repo:     repo,
-		provider: provider,
+		db:            db,
+		repo:          repo,
+		provider:      provider,
+		authorService: authorService,
 	}
 }
 
@@ -31,6 +36,8 @@ func (s *BooksService) ExtractExternalBooks(query string) error {
 }
 
 func (s *BooksService) processExternalBooks(books []externalBookModel) error {
+	authors := extractUniqueAuthors(books)
+	s.authorService.ProcessAuthors(authors)
 	// Get unique authors from books
 	// Send to author service to create any new entities and return a map of author names to IDs
 	// Do the same with books, create books if needed and return their IDs
