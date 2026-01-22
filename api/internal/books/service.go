@@ -3,6 +3,7 @@ package books
 import (
 	"bs-books-api/internal/authors"
 	"bs-books-api/internal/db"
+	"context"
 )
 
 type BooksService struct {
@@ -21,23 +22,19 @@ func NewBooksService(db db.DBTX, repo *booksRepo, provider BooksProvider, author
 	}
 }
 
-func (s *BooksService) ExtractExternalBooks(query string) error {
-	// Query external api and extract books into our db
-	books, err := s.provider.SearchBooks(query)
+func (s *BooksService) ExtractExternalBooks(query string, ctx context.Context) error {
+	externalBooks, err := s.provider.SearchBooks(query, ctx)
 	if err != nil {
 		return err
 	}
 
-	// Iterate over books and process
-	// Return entities that we can insert into our db and batch insert them later
-	err = s.processExternalBooks(books)
-
-	return nil
+	err = s.processExternalBooks(externalBooks, ctx)
+	return err
 }
 
-func (s *BooksService) processExternalBooks(books []externalBookModel) error {
+func (s *BooksService) processExternalBooks(books []externalBookModel, ctx context.Context) error {
 	authors := extractUniqueAuthors(books)
-	s.authorService.ProcessAuthors(authors)
+	s.authorService.ProcessAuthors(authors, ctx)
 	// Get unique authors from books
 	// Send to author service to create any new entities and return a map of author names to IDs
 	// Do the same with books, create books if needed and return their IDs
