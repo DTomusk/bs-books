@@ -3,30 +3,41 @@ package authors
 import (
 	"bs-books-api/internal/db"
 	"context"
+	"database/sql"
 )
 
-type AuthorsRepo struct{}
+type authorsRepo struct{}
 
-func NewAuthorsRepo() *AuthorsRepo {
-	return &AuthorsRepo{}
+func NewAuthorsRepo() *authorsRepo {
+	return &authorsRepo{}
 }
 
-func (r *AuthorsRepo) GetIDByName(name string, ctx context.Context, db db.DBTX) (string, error) {
+func (r *authorsRepo) getIDByName(name string, ctx context.Context, db db.DBTX) (string, error) {
+	var id string
+	row := db.QueryRowContext(ctx, `SELECT id FROM authors WHERE name = $1`, name)
+	err := row.Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return id, nil
+}
+
+func (r *authorsRepo) getIDByNormalisedName(normalisedName string, ctx context.Context, db db.DBTX) (string, error) {
 	return "", nil
 }
 
-func (r *AuthorsRepo) GetIDByNormalisedName(normalisedName string, ctx context.Context, db db.DBTX) (string, error) {
+func (r *authorsRepo) getIDByAlias(name string, ctx context.Context, db db.DBTX) (string, error) {
 	return "", nil
 }
 
-func (r *AuthorsRepo) GetIDByAlias(name string, ctx context.Context, db db.DBTX) (string, error) {
-	return "", nil
+func (r *authorsRepo) createAuthor(author *Author, ctx context.Context, db db.DBTX) error {
+	_, err := db.ExecContext(ctx, "INSERT INTO authors (id, name, normalised_name) VALUES ($1, $2, $3)", author.ID, author.Name, author.NormalisedName)
+	return err
 }
 
-func (r *AuthorsRepo) CreateAuthor(author *Author, ctx context.Context, db db.DBTX) error {
-	return nil
-}
-
-func (r *AuthorsRepo) CreateAuthorAlias(authorID, aliasName string, ctx context.Context, db db.DBTX) error {
+func (r *authorsRepo) createAuthorAlias(authorID, aliasName string, ctx context.Context, db db.DBTX) error {
 	return nil
 }

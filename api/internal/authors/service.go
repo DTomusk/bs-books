@@ -7,18 +7,18 @@ import (
 
 type AuthorsService struct {
 	db   db.DBTX
-	repo *AuthorsRepo
+	repo *authorsRepo
 }
 
-func NewAuthorsService(db db.DBTX, repo *AuthorsRepo) *AuthorsService {
+func NewAuthorsService(db db.DBTX, repo *authorsRepo) *AuthorsService {
 	return &AuthorsService{db: db, repo: repo}
 }
 
-func (s *AuthorsService) ProcessAuthors(authorNames []string, ctx context.Context) map[string]string {
+func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx context.Context) map[string]string {
 	namesToIDs := make(map[string]string)
 	// For each author:
 	for _, name := range authorNames {
-		id, err := s.processAuthor(name, ctx)
+		id, err := s.processExternalAuthor(name, ctx)
 		if err != nil {
 			// TODO: handle error case
 			// we probably don't want to fail the whole batch for one error
@@ -38,15 +38,18 @@ func (s *AuthorsService) ProcessAuthors(authorNames []string, ctx context.Contex
 	return nil
 }
 
-func (s *AuthorsService) processAuthor(name string, ctx context.Context) (string, error) {
+func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context) (string, error) {
 	// Exact name match
-	existingID, err := s.repo.GetIDByName(name, ctx, s.db)
+	existingID, err := s.repo.getIDByName(name, ctx, s.db)
 	if err != nil {
 		return "", err
 	}
+	if existingID != "" {
+		return existingID, nil
+	}
 
 	// Check aliases
-	existingID, err = s.repo.GetIDByAlias(name, ctx, s.db)
+	existingID, err = s.repo.getIDByAlias(name, ctx, s.db)
 	if err != nil {
 		return "", err
 	}
@@ -56,12 +59,12 @@ func (s *AuthorsService) processAuthor(name string, ctx context.Context) (string
 
 	// No alias match, check normalised name and add alias if matched
 	normalisedName := normaliseAuthorName(name)
-	existingID, err = s.repo.GetIDByNormalisedName(normalisedName, ctx, s.db)
+	existingID, err = s.repo.getIDByNormalisedName(normalisedName, ctx, s.db)
 	if err != nil {
 		return "", err
 	}
 	if existingID != "" {
-		err = s.repo.CreateAuthorAlias(existingID, name, ctx, s.db)
+		err = s.repo.createAuthorAlias(existingID, name, ctx, s.db)
 		if err != nil {
 			return existingID, err
 		}
@@ -69,7 +72,7 @@ func (s *AuthorsService) processAuthor(name string, ctx context.Context) (string
 	}
 
 	author := NewAuthor(name)
-	err = s.repo.CreateAuthor(author, ctx, s.db)
+	err = s.repo.createAuthor(author, ctx, s.db)
 	if err != nil {
 		return "", err
 	}

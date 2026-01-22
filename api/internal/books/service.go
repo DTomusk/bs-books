@@ -34,7 +34,7 @@ func (s *BooksService) ExtractExternalBooks(query string, ctx context.Context) e
 
 func (s *BooksService) processExternalBooks(books []externalBookModel, ctx context.Context) error {
 	authors := extractUniqueAuthors(books)
-	s.authorService.ProcessAuthors(authors, ctx)
+	s.authorService.ProcessExternalAuthors(authors, ctx)
 	// Get unique authors from books
 	// Send to author service to create any new entities and return a map of author names to IDs
 	// Do the same with books, create books if needed and return their IDs
