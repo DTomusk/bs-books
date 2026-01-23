@@ -2,6 +2,7 @@ package books
 
 import (
 	"bs-books-api/internal/testutil"
+	"context"
 	"database/sql"
 	"testing"
 
@@ -28,6 +29,16 @@ func TestExtractUniqueAuthors(t *testing.T) {
 
 func TestCreateBookWithAuthors(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		authorIDs := testutil.SeedAuthors(tx)
+		repo := NewBooksRepo()
+		ctx := context.Background()
+		service := NewBooksService(nil, repo, nil, nil)
+		book := NewBook("Test Book with Authors", authorIDs)
+		// Act
+		err := service.CreateBookWithAuthors(book, tx, ctx)
 
+		// Assert
+		require.NoError(t, err)
 	})
 }

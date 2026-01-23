@@ -2,6 +2,7 @@ package books
 
 import (
 	"bs-books-api/internal/authors"
+	"bs-books-api/internal/db"
 	"bs-books-api/internal/logging"
 	"context"
 	"database/sql"
@@ -55,7 +56,11 @@ func (s *BooksService) processExternalBook(externalBook externalBookModel, autho
 		return
 	}
 	book := NewBook(externalBook.Title, authorIDs)
-	err := s.CreateBookWithAuthors(book, ctx)
+
+	err := db.WithTx(ctx, s.db, func(tx *sql.Tx) error {
+		return s.CreateBookWithAuthors(book, tx, ctx)
+	})
+
 	if err != nil {
 		logger.Error("Failed to create book", "title", externalBook.Title, "error", err)
 		return
@@ -84,15 +89,8 @@ func extractUniqueAuthors(books []externalBookModel) []string {
 // But at the same time, the repo shouldn't know about transactions
 // The service coordinates the transaction
 // We want the book to fail if an author association fails
-func (s *BooksService) CreateBookWithAuthors(book *Book, ctx context.Context) error {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
-	err = s.repo.createBook(book, ctx, tx)
+func (s *BooksService) CreateBookWithAuthors(book *Book, tx *sql.Tx, ctx context.Context) error {
+	err := s.repo.createBook(book, ctx, tx)
 
 	if err != nil {
 		return err
@@ -102,8 +100,6 @@ func (s *BooksService) CreateBookWithAuthors(book *Book, ctx context.Context) er
 	if err != nil {
 		return err
 	}
-
-	err = tx.Commit()
 
 	return err
 }

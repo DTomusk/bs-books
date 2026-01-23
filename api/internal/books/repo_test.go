@@ -12,9 +12,10 @@ import (
 func TestCreateBook(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
+		authorIDs := testutil.SeedAuthors(tx)
 		repo := NewBooksRepo()
 		ctx := context.Background()
-		book := NewBook("A New Book", []string{"author-id-1", "author-id-2"})
+		book := NewBook("A New Book", authorIDs)
 
 		// Act
 		err := repo.createBook(book, ctx, tx)
