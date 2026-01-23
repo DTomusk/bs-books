@@ -82,7 +82,7 @@ func (r *authorsRepo) createAuthorAlias(authorID, aliasName string, ctx context.
 	return err
 }
 
-func (r *authorsRepo) searchByNormalisedName(normalisedName string, ctx context.Context, db db.DBTX) (*Author, error) {
+func (r *authorsRepo) searchByNormalisedName(normalisedName string, threshold float64, ctx context.Context, db db.DBTX) (*Author, error) {
 	query := `
 		SELECT 
 			id,
@@ -95,7 +95,7 @@ func (r *authorsRepo) searchByNormalisedName(normalisedName string, ctx context.
 		LIMIT 1
 	`
 	var author authorRow
-	row := db.QueryRowContext(ctx, query, normalisedName, 0.3)
+	row := db.QueryRowContext(ctx, query, normalisedName, threshold)
 	// Discard score (TODO: should we store it?)
 	err := row.Scan(&author.ID, &author.Name, &author.NormalisedName, new(interface{}))
 	if err != nil {

@@ -55,7 +55,8 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 	normalisedName := normaliseAuthorName(name)
 
 	// Search for similar normalised names
-	similarAuthor, err := s.repo.searchByNormalisedName(normalisedName, ctx, s.db)
+	// TODO: make threshold configurable, we'll want to observe which authors are marked as duplicates in real life
+	similarAuthor, err := s.repo.searchByNormalisedName(normalisedName, 0.8, ctx, s.db)
 	if err != nil {
 		return "", err
 	}

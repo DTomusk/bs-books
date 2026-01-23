@@ -71,7 +71,7 @@ func TestSearchByNormalisedName_ExactMatch(t *testing.T) {
 		require.NoError(t, err)
 
 		// Act
-		foundAuthor, err := repo.searchByNormalisedName(author.NormalisedName, ctx, tx)
+		foundAuthor, err := repo.searchByNormalisedName(author.NormalisedName, 0.9, ctx, tx)
 
 		// Assert
 		require.NoError(t, err)
@@ -90,9 +90,10 @@ func TestSearchByNormalisedName_CloseMatch(t *testing.T) {
 		author := NewAuthor("Dr. Seuss")
 		err := repo.createAuthor(author, ctx, tx)
 		require.NoError(t, err)
+		dupeAuthor := NewAuthor("Dr Seus")
 
 		// Act
-		foundAuthor, err := repo.searchByNormalisedName("dr seus", ctx, tx)
+		foundAuthor, err := repo.searchByNormalisedName(dupeAuthor.NormalisedName, 0.3, ctx, tx)
 
 		// Assert
 		require.NoError(t, err)
