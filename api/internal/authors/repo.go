@@ -69,13 +69,14 @@ func (r *authorsRepo) searchByNormalisedName(normalisedName string, ctx context.
 			normalised_name,
 			similarity(normalised_name, $1) AS similarity
 		FROM authors
-		WHERE similarity > $2
+		WHERE similarity(normalised_name, $1) > $2
 		ORDER BY similarity DESC
 		LIMIT 1
 	`
 	var author Author
 	row := db.QueryRowContext(ctx, query, normalisedName, 0.7)
-	err := row.Scan(&author.ID, &author.Name, &author.NormalisedName)
+	// Discard score (TODO: should we store it?)
+	err := row.Scan(&author.ID, &author.Name, &author.NormalisedName, new(interface{}))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
