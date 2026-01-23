@@ -119,3 +119,37 @@ func TestProcessExternalAuthor_SimilarNormalisedNameCreatesPotentialDuplicate(t 
 		require.Equal(t, author.ID, *newAuthor.DuplicateID)
 	})
 }
+
+func TestProcessExternalAuthors(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		repo := NewAuthorsRepo()
+		service := NewAuthorsService(tx, repo)
+		ctx := context.Background()
+		authorNames := []string{
+			"J R R Tolkien",
+			"J. R. R. Tolkien",
+			"Charles Bukowski",
+			"Charles bukowsky",
+			"Pee Pee Poo Poo",
+		}
+
+		// Act
+		authorIDs := service.ProcessExternalAuthors(authorNames, ctx)
+
+		// Assert
+		require.Len(t, authorIDs, len(authorNames))
+
+		// Verify authors created correctly
+		idSet := make(map[string]struct{})
+		for _, name := range authorNames {
+			id, exists := authorIDs[name]
+			require.True(t, exists)
+			require.NotEmpty(t, id)
+			idSet[id] = struct{}{}
+		}
+
+		require.True(t, authorIDs["J R R Tolkien"] == authorIDs["J. R. R. Tolkien"], "Expected Tolkien name variants to map to same ID")
+		require.True(t, authorIDs["Charles Bukowski"] != authorIDs["Charles bukowsky"], "Expected Bukowski name variants to map to different IDs")
+	})
+}

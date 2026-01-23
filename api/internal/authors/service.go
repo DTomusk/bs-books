@@ -29,7 +29,7 @@ func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx contex
 	}
 	// Keep track of all new authors to batch insert at the end
 	// Return map of author names to IDs
-	return nil
+	return namesToIDs
 }
 
 func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context) (string, error) {
