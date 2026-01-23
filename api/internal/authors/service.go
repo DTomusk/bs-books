@@ -2,6 +2,7 @@ package authors
 
 import (
 	"bs-books-api/internal/db"
+	"bs-books-api/internal/logging"
 	"context"
 )
 
@@ -17,21 +18,23 @@ func NewAuthorsService(db db.DBTX, repo *authorsRepo, similarityThreshold float6
 
 // TODO: batching if optimisation necessary
 func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx context.Context) map[string]string {
+	logger := logging.FromContext(ctx)
 	namesToIDs := make(map[string]string)
 	// For each author:
 	for _, name := range authorNames {
 		id, err := s.processExternalAuthor(name, ctx)
 		if err != nil {
+			// Log and skip error, see how often this happens irl
+			logger.Error("Failed to process external author", "name", name, "error", err)
 			continue
 		}
 		namesToIDs[name] = id
 	}
-	// Keep track of all new authors to batch insert at the end
-	// Return map of author names to IDs
 	return namesToIDs
 }
 
 func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context) (string, error) {
+	logger := logging.FromContext(ctx)
 	// Exact name match
 	existingID, err := s.repo.getIDByName(name, ctx, s.db)
 	if err != nil {
@@ -62,6 +65,7 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 	if similarAuthor == nil {
 		// No similar normalised name, create new author
 		author := NewAuthor(name)
+		logger.Info("Creating new author", "name", name, "id", author.ID)
 		err = s.repo.createAuthor(author, ctx, s.db)
 		if err != nil {
 			return "", err
@@ -72,6 +76,7 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 	// Similar normalised name found
 	// Check for exact match
 	if similarAuthor.NormalisedName == normalisedName {
+		logger.Info("Adding alias for existing author", "name", name, "id", similarAuthor.ID)
 		err = s.repo.createAuthorAlias(similarAuthor.ID, name, ctx, s.db)
 		if err != nil {
 			return "", err
@@ -81,6 +86,7 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 
 	// Similar but not exact, create author and flag as possible duplicate
 	author := NewAuthorWithDuplicate(name, similarAuthor.ID)
+	logger.Info("Creating author as potential duplicate", "name", name, "id", author.ID, "duplicate_of", similarAuthor.ID)
 	err = s.repo.createAuthor(author, ctx, s.db)
 	if err != nil {
 		return "", err

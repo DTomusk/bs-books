@@ -1,6 +1,8 @@
 package books
 
 import (
+	"bs-books-api/internal/testutil"
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,4 +24,10 @@ func TestExtractUniqueAuthors(t *testing.T) {
 	require.Contains(t, uniqueAuthors, "Author A")
 	require.Contains(t, uniqueAuthors, "Author B")
 	require.Contains(t, uniqueAuthors, "Author C")
+}
+
+func TestCreateBookWithAuthors(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+
+	})
 }

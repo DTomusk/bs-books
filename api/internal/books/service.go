@@ -2,18 +2,19 @@ package books
 
 import (
 	"bs-books-api/internal/authors"
-	"bs-books-api/internal/db"
+	"bs-books-api/internal/logging"
 	"context"
+	"database/sql"
 )
 
 type BooksService struct {
-	db            db.DBTX
+	db            *sql.DB
 	repo          *booksRepo
 	provider      BooksProvider
 	authorService *authors.AuthorsService
 }
 
-func NewBooksService(db db.DBTX, repo *booksRepo, provider BooksProvider, authorService *authors.AuthorsService) *BooksService {
+func NewBooksService(db *sql.DB, repo *booksRepo, provider BooksProvider, authorService *authors.AuthorsService) *BooksService {
 	return &BooksService{
 		db:            db,
 		repo:          repo,
@@ -28,18 +29,38 @@ func (s *BooksService) ExtractExternalBooks(query string, ctx context.Context) e
 		return err
 	}
 
-	err = s.processExternalBooks(externalBooks, ctx)
+	authors := extractUniqueAuthors(externalBooks)
+	// Get author ids, create authors as needed
+	authorNameIDs := s.authorService.ProcessExternalAuthors(authors, ctx)
+
+	for _, externalBook := range externalBooks {
+		s.processExternalBook(externalBook, authorNameIDs, ctx)
+	}
 	return err
 }
 
-func (s *BooksService) processExternalBooks(books []externalBookModel, ctx context.Context) error {
-	authors := extractUniqueAuthors(books)
-	s.authorService.ProcessExternalAuthors(authors, ctx)
-	// Get unique authors from books
-	// Send to author service to create any new entities and return a map of author names to IDs
-	// Do the same with books, create books if needed and return their IDs
-	// Then, insert book and author ids into junction table
-	return nil
+func (s *BooksService) processExternalBook(externalBook externalBookModel, authorNameIDs map[string]string, ctx context.Context) {
+	logger := logging.FromContext(ctx)
+	allAuthorsPresent := true
+	authorIDs := make([]string, 0, len(externalBook.Authors))
+	for _, authorName := range externalBook.Authors {
+		authorID, exists := authorNameIDs[authorName]
+		if !exists {
+			allAuthorsPresent = false
+			break
+		}
+		authorIDs = append(authorIDs, authorID)
+	}
+	if !allAuthorsPresent {
+		return
+	}
+	book := NewBook(externalBook.Title, authorIDs)
+	err := s.CreateBookWithAuthors(book, ctx)
+	if err != nil {
+		logger.Error("Failed to create book", "title", externalBook.Title, "error", err)
+		return
+	}
+	logger.Info("Created book", "title", externalBook.Title, "id", book.ID)
 }
 
 func extractUniqueAuthors(books []externalBookModel) []string {
@@ -57,4 +78,32 @@ func extractUniqueAuthors(books []externalBookModel) []string {
 	}
 
 	return uniqueAuthors
+}
+
+// The service shouldn't know about how book authors are stored
+// But at the same time, the repo shouldn't know about transactions
+// The service coordinates the transaction
+// We want the book to fail if an author association fails
+func (s *BooksService) CreateBookWithAuthors(book *Book, ctx context.Context) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	err = s.repo.createBook(book, ctx, tx)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.addAuthorsToBook(book.ID, book.AuthorIDs, ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+
+	return err
 }
