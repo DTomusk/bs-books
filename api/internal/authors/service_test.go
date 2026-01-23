@@ -96,5 +96,26 @@ func TestProcessExternalAuthor_NormalisedMatchCreatesAlias(t *testing.T) {
 }
 
 func TestProcessExternalAuthor_SimilarNormalisedNameCreatesPotentialDuplicate(t *testing.T) {
-	testutil.WithTx(t, func(tx *sql.Tx) {})
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		repo := NewAuthorsRepo()
+		service := NewAuthorsService(tx, repo)
+		ctx := context.Background()
+		author := NewAuthor("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+		err := repo.createAuthor(author, ctx, tx)
+		require.NoError(t, err)
+
+		// Act
+		returnedID, err := service.processExternalAuthor("ABCDEFGHIJKLMNOPQRSTUVWXY", ctx)
+
+		// Assert
+		require.NoError(t, err)
+		require.NotEqual(t, author.ID, returnedID)
+
+		// Verify new author created with duplicate ID set
+		newAuthor, err := repo.getAuthorByID(returnedID, ctx, tx)
+		require.NoError(t, err)
+		require.Equal(t, "ABCDEFGHIJKLMNOPQRSTUVWXY", newAuthor.Name)
+		require.Equal(t, author.ID, *newAuthor.DuplicateID)
+	})
 }
