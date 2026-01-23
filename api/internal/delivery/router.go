@@ -3,6 +3,7 @@ package delivery
 import (
 	"bs-books-api/internal/auth"
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/ratings"
 	"bs-books-api/internal/users"
 	"net/http"
@@ -20,7 +21,7 @@ func NewRouter(
 	jwtService *auth.JWTService,
 ) *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Logger())
+	r.Use(logging.RequestLoggerMiddleware)
 	r.Use(gin.Recovery())
 
 	api := r.Group("/api")

@@ -22,8 +22,6 @@ func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx contex
 	for _, name := range authorNames {
 		id, err := s.processExternalAuthor(name, ctx)
 		if err != nil {
-			// TODO: handle error case
-			// we probably don't want to fail the whole batch for one error
 			continue
 		}
 		namesToIDs[name] = id

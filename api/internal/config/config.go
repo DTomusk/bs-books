@@ -10,6 +10,7 @@ type Config struct {
 	DB_URL                 string
 	JWT_SECRET_KEY         string
 	JWT_EXPIRATION_MINUTES int
+	ENV                    string
 }
 
 var (
@@ -38,9 +39,15 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("invalid JWT_EXPIRATION_MINUTES value: %v", err)
 	}
 
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "development"
+	}
+
 	return &Config{
 		DB_URL:                 dbURL,
 		JWT_SECRET_KEY:         jwtSecretKey,
 		JWT_EXPIRATION_MINUTES: jwtExpirationMinutes,
+		ENV:                    env,
 	}, nil
 }
