@@ -12,6 +12,13 @@ func NewAuthorsRepo() *authorsRepo {
 	return &authorsRepo{}
 }
 
+type authorRow struct {
+	ID             string
+	Name           string
+	NormalisedName string
+	DuplicateID    sql.NullString
+}
+
 func (r *authorsRepo) getIDByName(name string, ctx context.Context, db db.DBTX) (string, error) {
 	var id string
 	row := db.QueryRowContext(ctx, `SELECT id FROM authors WHERE name = $1`, name)
@@ -56,6 +63,11 @@ func (r *authorsRepo) createAuthor(author *Author, ctx context.Context, db db.DB
 	return err
 }
 
+func (r *authorsRepo) createAuthorWithDuplicate(author *Author, ctx context.Context, db db.DBTX) error {
+	_, err := db.ExecContext(ctx, "INSERT INTO authors (id, name, normalised_name, duplicate_id) VALUES ($1, $2, $3, $4)", author.ID, author.Name, author.NormalisedName, author.DuplicateID)
+	return err
+}
+
 func (r *authorsRepo) createAuthorAlias(authorID, aliasName string, ctx context.Context, db db.DBTX) error {
 	_, err := db.ExecContext(ctx, "INSERT INTO author_alias (author_id, alias) VALUES ($1, $2)", authorID, aliasName)
 	return err
@@ -73,7 +85,7 @@ func (r *authorsRepo) searchByNormalisedName(normalisedName string, ctx context.
 		ORDER BY similarity DESC
 		LIMIT 1
 	`
-	var author Author
+	var author authorRow
 	row := db.QueryRowContext(ctx, query, normalisedName, 0.7)
 	// Discard score (TODO: should we store it?)
 	err := row.Scan(&author.ID, &author.Name, &author.NormalisedName, new(interface{}))
@@ -83,5 +95,20 @@ func (r *authorsRepo) searchByNormalisedName(normalisedName string, ctx context.
 		}
 		return nil, err
 	}
-	return &author, nil
+	return mapAuthorRowToEntity(author), nil
+}
+
+func mapAuthorRowToEntity(row authorRow) *Author {
+	var duplicateID *string
+	if row.DuplicateID.Valid {
+		duplicateID = &row.DuplicateID.String
+	} else {
+		duplicateID = nil
+	}
+	return &Author{
+		ID:             row.ID,
+		Name:           row.Name,
+		NormalisedName: row.NormalisedName,
+		DuplicateID:    duplicateID,
+	}
 }

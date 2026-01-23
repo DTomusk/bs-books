@@ -94,3 +94,7 @@ func TestProcessExternalAuthor_NormalisedMatchCreatesAlias(t *testing.T) {
 		require.Equal(t, author.ID, aliasID)
 	})
 }
+
+func TestProcessExternalAuthor_SimilarNormalisedNameCreatesPotentialDuplicate(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {})
+}

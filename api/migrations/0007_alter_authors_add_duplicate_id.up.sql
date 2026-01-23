@@ -1,0 +1,1 @@
+ALTER TABLE authors ADD COLUMN duplicate_id UUID NULL REFERENCES authors(id) ON DELETE SET NULL;
