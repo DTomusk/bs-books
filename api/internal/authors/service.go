@@ -82,7 +82,7 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 
 	// Similar but not exact, create author and flag as possible duplicate
 	author := NewAuthorWithDuplicate(name, similarAuthor.ID)
-	err = s.repo.createAuthorWithDuplicate(author, ctx, s.db)
+	err = s.repo.createAuthor(author, ctx, s.db)
 	if err != nil {
 		return "", err
 	}

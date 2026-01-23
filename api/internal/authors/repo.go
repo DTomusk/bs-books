@@ -58,12 +58,21 @@ func (r *authorsRepo) getIDByAlias(name string, ctx context.Context, db db.DBTX)
 	return authorID, nil
 }
 
-func (r *authorsRepo) createAuthor(author *Author, ctx context.Context, db db.DBTX) error {
-	_, err := db.ExecContext(ctx, "INSERT INTO authors (id, name, normalised_name) VALUES ($1, $2, $3)", author.ID, author.Name, author.NormalisedName)
-	return err
+func (r *authorsRepo) getAuthorByID(authorID string, ctx context.Context, db db.DBTX) (*Author, error) {
+	var author authorRow
+	row := db.QueryRowContext(ctx, `SELECT id, name, normalised_name, duplicate_id FROM authors WHERE id = $1`, authorID)
+	err := row.Scan(&author.ID, &author.Name, &author.NormalisedName, &author.DuplicateID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return mapAuthorRowToEntity(author), nil
 }
 
-func (r *authorsRepo) createAuthorWithDuplicate(author *Author, ctx context.Context, db db.DBTX) error {
+func (r *authorsRepo) createAuthor(author *Author, ctx context.Context, db db.DBTX) error {
 	_, err := db.ExecContext(ctx, "INSERT INTO authors (id, name, normalised_name, duplicate_id) VALUES ($1, $2, $3, $4)", author.ID, author.Name, author.NormalisedName, author.DuplicateID)
 	return err
 }
@@ -86,7 +95,7 @@ func (r *authorsRepo) searchByNormalisedName(normalisedName string, ctx context.
 		LIMIT 1
 	`
 	var author authorRow
-	row := db.QueryRowContext(ctx, query, normalisedName, 0.7)
+	row := db.QueryRowContext(ctx, query, normalisedName, 0.3)
 	// Discard score (TODO: should we store it?)
 	err := row.Scan(&author.ID, &author.Name, &author.NormalisedName, new(interface{}))
 	if err != nil {
