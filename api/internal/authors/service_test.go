@@ -13,7 +13,7 @@ func TestProcessExternalAuthor_CreatesNewAuthor(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		repo := NewAuthorsRepo()
-		service := NewAuthorsService(tx, repo)
+		service := NewAuthorsService(tx, repo, 0.8)
 		ctx := context.Background()
 		authorName := "New Author Name"
 
@@ -35,7 +35,7 @@ func TestProcessExternalAuthor_MatchReturnsID(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		repo := NewAuthorsRepo()
-		service := NewAuthorsService(tx, repo)
+		service := NewAuthorsService(tx, repo, 0.8)
 		ctx := context.Background()
 		author := NewAuthor("My Favourite Author!")
 		err := repo.createAuthor(author, ctx, tx)
@@ -54,7 +54,7 @@ func TestProcessExternalAuthor_AliasMatchReturnsID(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		repo := NewAuthorsRepo()
-		service := NewAuthorsService(tx, repo)
+		service := NewAuthorsService(tx, repo, 0.8)
 		ctx := context.Background()
 		author := NewAuthor("Original Author Name")
 		err := repo.createAuthor(author, ctx, tx)
@@ -75,7 +75,7 @@ func TestProcessExternalAuthor_NormalisedMatchCreatesAlias(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		repo := NewAuthorsRepo()
-		service := NewAuthorsService(tx, repo)
+		service := NewAuthorsService(tx, repo, 0.8)
 		ctx := context.Background()
 		author := NewAuthor("J. G. Ballard")
 		err := repo.createAuthor(author, ctx, tx)
@@ -99,7 +99,7 @@ func TestProcessExternalAuthor_SimilarNormalisedNameCreatesPotentialDuplicate(t 
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		repo := NewAuthorsRepo()
-		service := NewAuthorsService(tx, repo)
+		service := NewAuthorsService(tx, repo, 0.7)
 		ctx := context.Background()
 		author := NewAuthor("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 		err := repo.createAuthor(author, ctx, tx)
@@ -124,7 +124,7 @@ func TestProcessExternalAuthors(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		repo := NewAuthorsRepo()
-		service := NewAuthorsService(tx, repo)
+		service := NewAuthorsService(tx, repo, 0.7)
 		ctx := context.Background()
 		authorNames := []string{
 			"J R R Tolkien",
@@ -148,8 +148,22 @@ func TestProcessExternalAuthors(t *testing.T) {
 			require.NotEmpty(t, id)
 			idSet[id] = struct{}{}
 		}
+		require.Len(t, idSet, 4, "Expected 4 unique author IDs from 5 names due to Tolkien name variants")
 
-		require.True(t, authorIDs["J R R Tolkien"] == authorIDs["J. R. R. Tolkien"], "Expected Tolkien name variants to map to same ID")
-		require.True(t, authorIDs["Charles Bukowski"] != authorIDs["Charles bukowsky"], "Expected Bukowski name variants to map to different IDs")
+		require.Equal(t, authorIDs["J R R Tolkien"], authorIDs["J. R. R. Tolkien"], "Expected Tolkien name variants to map to same ID")
+		require.NotEqual(t, authorIDs["Charles Bukowski"], authorIDs["Charles bukowsky"], "Expected Bukowski name variants to map to different IDs")
+
+		// Verify Tolkien alias
+		aliasID, err := repo.getIDByAlias("J. R. R. Tolkien", ctx, tx)
+		require.NoError(t, err)
+		require.Equal(t, authorIDs["J R R Tolkien"], aliasID)
+
+		// Verify Bukowski duplicate
+		dupeAuthor, err := repo.getAuthorByID(authorIDs["Charles bukowsky"], ctx, tx)
+		require.NoError(t, err)
+		require.NotNil(t, dupeAuthor.DuplicateID)
+		originalID, exists := authorIDs["Charles Bukowski"]
+		require.True(t, exists)
+		require.Equal(t, originalID, *dupeAuthor.DuplicateID)
 	})
 }

@@ -6,12 +6,13 @@ import (
 )
 
 type AuthorsService struct {
-	db   db.DBTX
-	repo *authorsRepo
+	db                  db.DBTX
+	repo                *authorsRepo
+	similarityThreshold float64
 }
 
-func NewAuthorsService(db db.DBTX, repo *authorsRepo) *AuthorsService {
-	return &AuthorsService{db: db, repo: repo}
+func NewAuthorsService(db db.DBTX, repo *authorsRepo, similarityThreshold float64) *AuthorsService {
+	return &AuthorsService{db: db, repo: repo, similarityThreshold: similarityThreshold}
 }
 
 // TODO: batching if optimisation necessary
@@ -55,8 +56,7 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 	normalisedName := normaliseAuthorName(name)
 
 	// Search for similar normalised names
-	// TODO: make threshold configurable, we'll want to observe which authors are marked as duplicates in real life
-	similarAuthor, err := s.repo.searchByNormalisedName(normalisedName, 0.8, ctx, s.db)
+	similarAuthor, err := s.repo.searchByNormalisedName(normalisedName, s.similarityThreshold, ctx, s.db)
 	if err != nil {
 		return "", err
 	}
