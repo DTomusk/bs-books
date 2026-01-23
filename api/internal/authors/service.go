@@ -14,6 +14,7 @@ func NewAuthorsService(db db.DBTX, repo *authorsRepo) *AuthorsService {
 	return &AuthorsService{db: db, repo: repo}
 }
 
+// TODO: batching if optimisation necessary
 func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx context.Context) map[string]string {
 	namesToIDs := make(map[string]string)
 	// For each author:
@@ -26,13 +27,6 @@ func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx contex
 		}
 		namesToIDs[name] = id
 	}
-	// Check for exact match in db
-	// If exists, return that ID
-	// If not, check for exact match in alias table
-	// If exists, return that ID
-	// If not, normalise name and check against normalised name in author table
-	// If exists, add name to alias table and return that author's ID
-	// If it is normalised versions are highly similar, create new author entry flagged as possible duplicate
 	// Keep track of all new authors to batch insert at the end
 	// Return map of author names to IDs
 	return nil
@@ -48,7 +42,7 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 		return existingID, nil
 	}
 
-	// Check aliases
+	// Check aliases, return id if exact match
 	existingID, err = s.repo.getIDByAlias(name, ctx, s.db)
 	if err != nil {
 		return "", err
@@ -59,23 +53,38 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context)
 
 	// No alias match, check normalised name and add alias if matched
 	normalisedName := normaliseAuthorName(name)
-	existingID, err = s.repo.getIDByNormalisedName(normalisedName, ctx, s.db)
+
+	// Search for similar normalised names
+	similarAuthor, err := s.repo.searchByNormalisedName(normalisedName, ctx, s.db)
 	if err != nil {
 		return "", err
 	}
-	if existingID != "" {
-		err = s.repo.createAuthorAlias(existingID, name, ctx, s.db)
+
+	if similarAuthor == nil {
+		// No similar normalised name, create new author
+		author := NewAuthor(name)
+		err = s.repo.createAuthor(author, ctx, s.db)
 		if err != nil {
-			return existingID, err
+			return "", err
 		}
-		return existingID, nil
+		return author.ID, nil
 	}
 
+	// Similar normalised name found
+	// Check for exact match
+	if similarAuthor.NormalisedName == normalisedName {
+		err = s.repo.createAuthorAlias(similarAuthor.ID, name, ctx, s.db)
+		if err != nil {
+			return "", err
+		}
+		return similarAuthor.ID, nil
+	}
+
+	// Similar but not exact, create author and flag as possible duplicate
 	author := NewAuthor(name)
 	err = s.repo.createAuthor(author, ctx, s.db)
 	if err != nil {
 		return "", err
 	}
-
 	return author.ID, nil
 }

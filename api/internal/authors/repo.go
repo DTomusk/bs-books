@@ -60,3 +60,27 @@ func (r *authorsRepo) createAuthorAlias(authorID, aliasName string, ctx context.
 	_, err := db.ExecContext(ctx, "INSERT INTO author_alias (author_id, alias) VALUES ($1, $2)", authorID, aliasName)
 	return err
 }
+
+func (r *authorsRepo) searchByNormalisedName(normalisedName string, ctx context.Context, db db.DBTX) (*Author, error) {
+	query := `
+		SELECT 
+			id,
+			name,
+			normalised_name,
+			similarity(normalised_name, $1) AS similarity
+		FROM authors
+		WHERE similarity > $2
+		ORDER BY similarity DESC
+		LIMIT 1
+	`
+	var author Author
+	row := db.QueryRowContext(ctx, query, normalisedName, 0.7)
+	err := row.Scan(&author.ID, &author.Name, &author.NormalisedName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &author, nil
+}
