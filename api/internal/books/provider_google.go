@@ -2,6 +2,9 @@ package books
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -28,8 +31,8 @@ func NewGoogleBooksProvider(client *http.Client) *GoogleBooksProvider {
 	}
 }
 
-func (p *GoogleBooksProvider) SearchBooks(query string, ctx context.Context) ([]externalBookModel, error) {
-	googleBooks, err := p.queryAPI(query, ctx)
+func (p *GoogleBooksProvider) SearchBooks(query string, maxResults int, ctx context.Context) ([]externalBookModel, error) {
+	googleBooks, err := p.queryAPI(query, maxResults, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -37,46 +40,44 @@ func (p *GoogleBooksProvider) SearchBooks(query string, ctx context.Context) ([]
 	return externalBooks, nil
 }
 
-func (p *GoogleBooksProvider) queryAPI(query string, ctx context.Context) ([]googleVolume, error) {
-	// Uncomment later to enable actual API calls
-	// baseURL := "https://www.googleapis.com/books/v1/volumes?q="
+func (p *GoogleBooksProvider) queryAPI(query string, maxResults int, ctx context.Context) ([]googleVolume, error) {
+	baseURL := "https://www.googleapis.com/books/v1/volumes?q="
 
-	// req, err := http.NewRequestWithContext(
-	// 	ctx,
-	// 	http.MethodGet,
-	// 	baseURL+query,
-	// 	nil,
-	// )
-	// if err != nil {
-	// 	return nil, err
-	// }
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		baseURL+query,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
 
-	// // TODO: consider making configurable
-	// q := req.URL.Query()
-	// q.Set("q", query)
-	// q.Set("maxResults", "40")
-	// q.Set("startIndex", "0")
+	// TODO: consider making configurable
+	q := req.URL.Query()
+	q.Set("q", query)
+	q.Set("maxResults", fmt.Sprintf("%d", maxResults))
+	q.Set("startIndex", "0")
 
-	// req.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	// resp, err := p.httpClient.Do(req)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer resp.Body.Close()
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-	// if resp.StatusCode != http.StatusOK {
-	// 	body, _ := io.ReadAll(resp.Body)
-	// 	return nil, fmt.Errorf("google books api returned status %d: %s", resp.StatusCode, string(body))
-	// }
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("google books api returned status %d: %s", resp.StatusCode, string(body))
+	}
 
-	// var apiResponse googleBooksAPIResponse
-	// if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
-	// 	return nil, err
-	// }
+	var apiResponse googleBooksAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return nil, err
+	}
 
-	// return apiResponse.Items, nil
-	return make([]googleVolume, 0), nil
+	return apiResponse.Items, nil
 }
 
 func mapGoogleToExternal(googleBooks []googleVolume) []externalBookModel {

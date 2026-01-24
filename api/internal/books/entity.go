@@ -1,5 +1,7 @@
 package books
 
+import "github.com/google/uuid"
+
 type Book struct {
 	ID        string
 	Title     string
@@ -8,6 +10,7 @@ type Book struct {
 
 func NewBook(title string, authorIDs []string) *Book {
 	return &Book{
+		ID:        uuid.NewString(),
 		Title:     title,
 		AuthorIDs: authorIDs,
 	}

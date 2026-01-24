@@ -15,7 +15,7 @@ func TestQueryGoogleAPI(t *testing.T) {
 	ctx := context.Background()
 
 	// Act
-	volumes, err := provider.queryAPI("harry+potter", ctx)
+	volumes, err := provider.queryAPI("harry+potter", 1, ctx)
 
 	// Assert
 	require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestSearchBooks(t *testing.T) {
 	ctx := context.Background()
 
 	// Act
-	externalBooks, err := provider.SearchBooks("lord+of+the+rings", ctx)
+	externalBooks, err := provider.SearchBooks("lord+of+the+rings", 1, ctx)
 
 	// Assert
 	require.NoError(t, err)

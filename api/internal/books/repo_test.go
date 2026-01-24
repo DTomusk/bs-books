@@ -33,5 +33,8 @@ func TestCreateBook(t *testing.T) {
 		err = repo.addAuthorsToBook(book.ID, book.AuthorIDs, ctx, tx)
 		require.NoError(t, err)
 
+		repoBook, err = repo.getBookByID(book.ID, ctx, tx)
+		require.NoError(t, err)
+		require.ElementsMatch(t, book.AuthorIDs, repoBook.AuthorIDs)
 	})
 }
