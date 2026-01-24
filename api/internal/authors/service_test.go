@@ -1,6 +1,7 @@
 package authors
 
 import (
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/testutil"
 	"context"
 	"database/sql"
@@ -18,7 +19,7 @@ func TestProcessExternalAuthor_CreatesNewAuthor(t *testing.T) {
 		authorName := "New Author Name"
 
 		// Act
-		returnedID, err := service.processExternalAuthor(authorName, ctx)
+		returnedID, err := service.processExternalAuthor(authorName, ctx, logging.FromContext(ctx))
 
 		// Assert
 		require.NoError(t, err)
@@ -42,7 +43,7 @@ func TestProcessExternalAuthor_MatchReturnsID(t *testing.T) {
 		require.NoError(t, err)
 
 		// Act
-		returnedID, err := service.processExternalAuthor("My Favourite Author!", ctx)
+		returnedID, err := service.processExternalAuthor("My Favourite Author!", ctx, logging.FromContext(ctx))
 
 		// Assert
 		require.NoError(t, err)
@@ -63,7 +64,7 @@ func TestProcessExternalAuthor_AliasMatchReturnsID(t *testing.T) {
 		require.NoError(t, err)
 
 		// Act
-		returnedID, err := service.processExternalAuthor("Alias Author Name", ctx)
+		returnedID, err := service.processExternalAuthor("Alias Author Name", ctx, logging.FromContext(ctx))
 
 		// Assert
 		require.NoError(t, err)
@@ -82,7 +83,7 @@ func TestProcessExternalAuthor_NormalisedMatchCreatesAlias(t *testing.T) {
 		require.NoError(t, err)
 
 		// Act
-		returnedID, err := service.processExternalAuthor("J G Ballard", ctx)
+		returnedID, err := service.processExternalAuthor("J G Ballard", ctx, logging.FromContext(ctx))
 
 		// Assert
 		require.NoError(t, err)
@@ -106,7 +107,7 @@ func TestProcessExternalAuthor_SimilarNormalisedNameCreatesPotentialDuplicate(t 
 		require.NoError(t, err)
 
 		// Act
-		returnedID, err := service.processExternalAuthor("ABCDEFGHIJKLMNOPQRSTUVWXY", ctx)
+		returnedID, err := service.processExternalAuthor("ABCDEFGHIJKLMNOPQRSTUVWXY", ctx, logging.FromContext(ctx))
 
 		// Assert
 		require.NoError(t, err)

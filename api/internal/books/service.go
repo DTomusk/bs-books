@@ -6,6 +6,7 @@ import (
 	"bs-books-api/internal/logging"
 	"context"
 	"database/sql"
+	"log/slog"
 )
 
 type BooksService struct {
@@ -24,6 +25,7 @@ func NewBooksService(db *sql.DB, repo *booksRepo, provider BooksProvider, author
 	}
 }
 
+// Fetches books by searching external provider and then saves books and authors in db
 func (s *BooksService) ExtractExternalBooks(query string, ctx context.Context) error {
 	externalBooks, err := s.provider.SearchBooks(query, ctx)
 	if err != nil {
@@ -31,33 +33,36 @@ func (s *BooksService) ExtractExternalBooks(query string, ctx context.Context) e
 	}
 
 	authors := extractUniqueAuthors(externalBooks)
+
+	if len(authors) == 0 {
+		return nil
+	}
+
 	// Get author ids, create authors as needed
+	// Store regardless of book success (outside of transaction)
 	authorNameIDs := s.authorService.ProcessExternalAuthors(authors, ctx)
+
+	if len(authorNameIDs) == 0 {
+		return nil
+	}
 
 	for _, externalBook := range externalBooks {
 		s.processExternalBook(externalBook, authorNameIDs, ctx)
 	}
-	return err
+	return nil
 }
 
 func (s *BooksService) processExternalBook(externalBook externalBookModel, authorNameIDs map[string]string, ctx context.Context) {
 	logger := logging.FromContext(ctx)
-	allAuthorsPresent := true
-	authorIDs := make([]string, 0, len(externalBook.Authors))
-	for _, authorName := range externalBook.Authors {
-		authorID, exists := authorNameIDs[authorName]
-		if !exists {
-			allAuthorsPresent = false
-			break
-		}
-		authorIDs = append(authorIDs, authorID)
-	}
-	if !allAuthorsPresent {
-		return
-	}
-	book, err := NewBook(externalBook.Title, authorIDs)
+
+	book, err := createBookFromExternal(externalBook, authorNameIDs, logger)
+
 	if err != nil {
-		logger.Error("Failed to create book entity", "title", externalBook.Title, "error", err)
+		if err == ErrNotAllAuthorsPresent {
+			logger.Info("Skipping book creation as not all authors are present", "title", externalBook.Title)
+			return
+		}
+		logger.Error("Failed to create book from external data", "title", externalBook.Title, "error", err)
 		return
 	}
 
@@ -70,6 +75,28 @@ func (s *BooksService) processExternalBook(externalBook externalBookModel, autho
 		return
 	}
 	logger.Info("Created book", "title", externalBook.Title, "id", book.ID)
+}
+
+func createBookFromExternal(externalBook externalBookModel, authorNameIDs map[string]string, logger *slog.Logger) (*Book, error) {
+	allAuthorsPresent := true
+	authorIDs := make([]string, 0, len(externalBook.Authors))
+	for _, authorName := range externalBook.Authors {
+		authorID, exists := authorNameIDs[authorName]
+		if !exists {
+			allAuthorsPresent = false
+			break
+		}
+		authorIDs = append(authorIDs, authorID)
+	}
+	if !allAuthorsPresent {
+		return nil, ErrNotAllAuthorsPresent
+	}
+	book, err := NewBook(externalBook.Title, authorIDs)
+	if err != nil {
+		logger.Error("Failed to create book entity", "title", externalBook.Title, "error", err)
+		return nil, err
+	}
+	return book, nil
 }
 
 func extractUniqueAuthors(books []externalBookModel) []string {
@@ -95,7 +122,7 @@ func extractUniqueAuthors(books []externalBookModel) []string {
 // We want the book to fail if an author association fails
 func (s *BooksService) CreateBookWithAuthors(book *Book, tx *sql.Tx, ctx context.Context) error {
 	logger := logging.FromContext(ctx)
-	logger.Info("Creating book", "title", book.Title, "id", book.ID)
+	logger.Info("Creating book", "title", book.Title, "id", book.ID, "authors", book.AuthorIDs)
 	err := s.repo.createBook(book, ctx, tx)
 
 	if err != nil {
@@ -109,5 +136,5 @@ func (s *BooksService) CreateBookWithAuthors(book *Book, tx *sql.Tx, ctx context
 		return err
 	}
 
-	return err
+	return nil
 }

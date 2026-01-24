@@ -1,6 +1,7 @@
 package books
 
 import (
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/testutil"
 	"context"
 	"database/sql"
@@ -42,5 +43,53 @@ func TestCreateBookWithAuthors(t *testing.T) {
 
 		// Assert
 		require.NoError(t, err)
+
+		// Verify book was created correctly
+		repoBook, err := repo.getBookByID(book.ID, ctx, tx)
+		require.NoError(t, err)
+		require.Equal(t, book.ID, repoBook.ID)
+		require.Equal(t, book.Title, repoBook.Title)
+		require.ElementsMatch(t, book.AuthorIDs, repoBook.AuthorIDs)
 	})
+}
+
+func TestCreateBookFromExternal_AllAuthorsPresent(t *testing.T) {
+	// Arrange
+	externalBook := externalBookModel{
+		Title:   "External Book",
+		Authors: []string{"Author A", "Author B"},
+	}
+	authorNameIDs := map[string]string{
+		"Author A": "author-a-id",
+		"Author B": "author-b-id",
+	}
+	logger := logging.FromContext(context.Background())
+
+	// Act
+	book, err := createBookFromExternal(externalBook, authorNameIDs, logger)
+
+	// Assert
+	require.NoError(t, err)
+	require.Equal(t, externalBook.Title, book.Title)
+	require.ElementsMatch(t, []string{"author-a-id", "author-b-id"}, book.AuthorIDs)
+}
+
+func TestCreateBookFromExternal_MissingAuthors(t *testing.T) {
+	// Arrange
+	externalBook := externalBookModel{
+		Title:   "External Book",
+		Authors: []string{"Author A", "Author C"},
+	}
+	authorNameIDs := map[string]string{
+		"Author A": "author-a-id",
+		"Author B": "author-b-id",
+	}
+	logger := logging.FromContext(context.Background())
+
+	// Act
+	book, err := createBookFromExternal(externalBook, authorNameIDs, logger)
+
+	// Assert
+	require.Nil(t, book)
+	require.Equal(t, ErrNotAllAuthorsPresent, err)
 }

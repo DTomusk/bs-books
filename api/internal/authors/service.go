@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/logging"
 	"context"
+	"log/slog"
 )
 
 type AuthorsService struct {
@@ -22,7 +23,7 @@ func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx contex
 	namesToIDs := make(map[string]string)
 	// For each author:
 	for _, name := range authorNames {
-		id, err := s.processExternalAuthor(name, ctx)
+		id, err := s.processExternalAuthor(name, ctx, logger)
 		if err != nil {
 			// Log and skip error, see how often this happens irl
 			logger.Error("Failed to process external author", "name", name, "error", err)
@@ -33,8 +34,7 @@ func (s *AuthorsService) ProcessExternalAuthors(authorNames []string, ctx contex
 	return namesToIDs
 }
 
-func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context) (string, error) {
-	logger := logging.FromContext(ctx)
+func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context, logger *slog.Logger) (string, error) {
 	// Exact name match
 	existingID, err := s.repo.getIDByName(name, ctx, s.db)
 	if err != nil {
