@@ -55,9 +55,13 @@ func (s *BooksService) processExternalBook(externalBook externalBookModel, autho
 	if !allAuthorsPresent {
 		return
 	}
-	book := NewBook(externalBook.Title, authorIDs)
+	book, err := NewBook(externalBook.Title, authorIDs)
+	if err != nil {
+		logger.Error("Failed to create book entity", "title", externalBook.Title, "error", err)
+		return
+	}
 
-	err := db.WithTx(ctx, s.db, func(tx *sql.Tx) error {
+	err = db.WithTx(ctx, s.db, func(tx *sql.Tx) error {
 		return s.CreateBookWithAuthors(book, tx, ctx)
 	})
 
@@ -90,14 +94,18 @@ func extractUniqueAuthors(books []externalBookModel) []string {
 // The service coordinates the transaction
 // We want the book to fail if an author association fails
 func (s *BooksService) CreateBookWithAuthors(book *Book, tx *sql.Tx, ctx context.Context) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("Creating book", "title", book.Title, "id", book.ID)
 	err := s.repo.createBook(book, ctx, tx)
 
 	if err != nil {
+		logger.Error("Failed to create book", "title", book.Title, "error", err)
 		return err
 	}
 
 	err = s.repo.addAuthorsToBook(book.ID, book.AuthorIDs, ctx, tx)
 	if err != nil {
+		logger.Error("Failed to add authors to book", "title", book.Title, "error", err)
 		return err
 	}
 

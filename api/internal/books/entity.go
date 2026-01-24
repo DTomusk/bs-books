@@ -8,10 +8,13 @@ type Book struct {
 	AuthorIDs []string
 }
 
-func NewBook(title string, authorIDs []string) *Book {
+func NewBook(title string, authorIDs []string) (*Book, error) {
+	if len(authorIDs) == 0 {
+		return nil, ErrNoAuthorsProvided
+	}
 	return &Book{
 		ID:        uuid.NewString(),
 		Title:     title,
 		AuthorIDs: authorIDs,
-	}
+	}, nil
 }

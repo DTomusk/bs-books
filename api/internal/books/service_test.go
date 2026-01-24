@@ -34,9 +34,11 @@ func TestCreateBookWithAuthors(t *testing.T) {
 		repo := NewBooksRepo()
 		ctx := context.Background()
 		service := NewBooksService(nil, repo, nil, nil)
-		book := NewBook("Test Book with Authors", authorIDs)
+		book, err := NewBook("Test Book with Authors", authorIDs)
+		require.NoError(t, err)
+
 		// Act
-		err := service.CreateBookWithAuthors(book, tx, ctx)
+		err = service.CreateBookWithAuthors(book, tx, ctx)
 
 		// Assert
 		require.NoError(t, err)
