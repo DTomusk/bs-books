@@ -2,7 +2,7 @@ package main
 
 import (
 	"bs-books-api/internal/auth"
-	"bs-books-api/internal/books"
+	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
 	"bs-books-api/internal/logging"
@@ -74,7 +74,8 @@ func main() {
 	authHandler := auth.NewAuthHandler(authService)
 
 	bookReader := queries.NewBookReader(db)
-	bookHandler := books.NewBookHandler(bookReader)
+	bookSearchService := search.NewBookSearchService(bookReader)
+	searchHandler := search.NewSearchHandler(bookSearchService)
 
 	ratingRepo := ratings.NewRatingRepo()
 	ratingService := ratings.NewRatingService(db, ratingRepo)
@@ -82,7 +83,7 @@ func main() {
 
 	r := delivery.NewRouter(
 		authHandler,
-		bookHandler,
+		searchHandler,
 		ratingHandler,
 		userHandler,
 		jwtService,
