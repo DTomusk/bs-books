@@ -1,6 +1,8 @@
 <template>
   <div>
-    <q-img :src="imageUrl">
+    <q-img
+      src="https://img.pixers.pics/pho_wat(s3:700/FO/65/70/77/40/700_FO65707740_a1f7177e6af5a55410a721d7e08b3400.jpg,700,689,cms:2018/10/5bd1b6b8d04b8_220x50-watermark.png,over,480,639,jpg)/wall-murals-bookshelf-full-with-books.jpg.jpg"
+    >
       <div class="top-bottom-gradient">
         <div class="flex-left logoContainer">
           <q-img src="src/assets/LogoRectangleLong.png" width="50%" />
@@ -28,25 +30,73 @@
         <template v-slot:append> <q-btn icon="search" round dense flat /> </template
       ></q-input>
     </div>
+    <div>
+      <BookCarousel title="Featured" :books="featuredBooks" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import BookCarousel from 'src/components/book/BookCarousel.vue';
+import type { Book } from 'src/components/models';
 import { ref } from 'vue';
 
-// const featuredBooks: { imageUrl: string; title: string }[] = [
-//   {
-//     imageUrl:
-//       'https://www.stylist.co.uk/images/app/uploads/2017/06/12153937/91mpkwml6il-1518x1012.jpg',
-//     title: 'Tracy Beaker',
-//   },
-//   {
-//     imageUrl: 'https://images.wolfgangsvault.com/m/large/ZZZ025983-BK/twilight-book-2005.jpg',
-//     title: 'Twilight',
-//   },
-// ];
-const imageUrl =
-  'https://img.pixers.pics/pho_wat(s3:700/FO/65/70/77/40/700_FO65707740_a1f7177e6af5a55410a721d7e08b3400.jpg,700,689,cms:2018/10/5bd1b6b8d04b8_220x50-watermark.png,over,480,639,jpg)/wall-murals-bookshelf-full-with-books.jpg.jpg';
+const featuredBooks: Book[] = [
+  {
+    image:
+      'https://www.stylist.co.uk/images/app/uploads/2017/06/12153937/91mpkwml6il-1518x1012.jpg',
+    title: 'Tracy Beaker',
+  },
+  {
+    image: 'https://images.wolfgangsvault.com/m/large/ZZZ025983-BK/twilight-book-2005.jpg',
+    title: 'Twilight',
+  },
+  {
+    image:
+      'https://www.stylist.co.uk/images/app/uploads/2017/06/12153937/91mpkwml6il-1518x1012.jpg',
+    title: 'Tracy Beaker',
+  },
+  {
+    image: 'https://images.wolfgangsvault.com/m/large/ZZZ025983-BK/twilight-book-2005.jpg',
+    title: 'Twilight',
+  },
+  {
+    image:
+      'https://www.stylist.co.uk/images/app/uploads/2017/06/12153937/91mpkwml6il-1518x1012.jpg',
+    title: 'Tracy Beaker',
+  },
+  {
+    image: 'https://images.wolfgangsvault.com/m/large/ZZZ025983-BK/twilight-book-2005.jpg',
+    title: 'Twilight',
+  },
+  {
+    image:
+      'https://www.stylist.co.uk/images/app/uploads/2017/06/12153937/91mpkwml6il-1518x1012.jpg',
+    title: 'Tracy Beaker',
+  },
+  {
+    image: 'https://images.wolfgangsvault.com/m/large/ZZZ025983-BK/twilight-book-2005.jpg',
+    title: 'Twilight',
+  },
+  {
+    image:
+      'https://www.stylist.co.uk/images/app/uploads/2017/06/12153937/91mpkwml6il-1518x1012.jpg',
+    title: 'Tracy Beaker',
+  },
+  {
+    image: 'https://images.wolfgangsvault.com/m/large/ZZZ025983-BK/twilight-book-2005.jpg',
+    title: 'Twilight',
+  },
+  {
+    image:
+      'https://www.stylist.co.uk/images/app/uploads/2017/06/12153937/91mpkwml6il-1518x1012.jpg',
+    title: 'Tracy Beaker',
+  },
+  {
+    image: 'https://images.wolfgangsvault.com/m/large/ZZZ025983-BK/twilight-book-2005.jpg',
+    title: 'Twilight',
+  },
+];
 // const slide = ref(featuredBooks[0]?.title);
 const searchValue = ref('');
 </script>

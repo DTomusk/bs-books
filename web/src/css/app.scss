@@ -12,15 +12,17 @@
   background: #8A2B13 !important;
 }
 
-// declare a class which applies it
-.my-font {
-  font-family: 'customfont';
-}
-
+// Layout
 .flex-centre-col {
   display: flex;
   align-items: center;
   flex-direction: column;
+}
+
+.flex-centre-row {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
 }
 
 .flex-left {
@@ -39,4 +41,9 @@
 ul li::marker {
   color: $accent;
   font-size: large;
+}
+
+// Misc
+.hoverable:hover {
+  cursor: pointer;
 }
