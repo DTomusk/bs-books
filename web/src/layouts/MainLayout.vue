@@ -62,7 +62,7 @@ function toggleLeftDrawer() {
 
 <style lang="scss" scoped>
 .background {
-  --tile: 1000px;
+  --tile: 1200px;
 
   background:
     url('src/assets/backgroundPatternHorizontal.svg') repeat,
