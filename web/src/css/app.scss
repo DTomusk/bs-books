@@ -1,1 +1,42 @@
-// app global css in SCSS form
+// Adding tertiary and quaternary as custom colours 
+.text-tertiary {
+  color: #C4501B !important;
+}
+.bg-tertiary {
+  background: #C4501B !important;
+}
+.text-quaternary {
+  color: #8A2B13 !important;
+}
+.bg-quaternary {
+  background: #8A2B13 !important;
+}
+
+// declare a class which applies it
+.my-font {
+  font-family: 'customfont';
+}
+
+.flex-centre-col {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.flex-left {
+  display: flex;
+  justify-content: start;
+}
+
+// Text classes
+.title {
+  font-size: large;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+// Lists
+ul li::marker {
+  color: $accent;
+  font-size: large;
+}
