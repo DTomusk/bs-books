@@ -22,7 +22,7 @@ func TestNormaliseAuthorName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := normaliseAuthorName(tt.name); got != tt.expected {
+			if got := NormaliseAuthorName(tt.name); got != tt.expected {
 				t.Errorf("normaliseAuthorName() = %v, want %v", got, tt.expected)
 			}
 		})

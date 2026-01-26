@@ -6,7 +6,6 @@ import (
 	"bs-books-api/internal/logging"
 	"context"
 	"database/sql"
-	"log/slog"
 )
 
 type BooksService struct {
@@ -26,13 +25,14 @@ func NewBooksService(db *sql.DB, repo *booksRepo, provider BooksProvider, author
 }
 
 // Fetches books by searching external provider and then saves books and authors in db
-// TODO: return which books have been extracted
 func (s *BooksService) ExtractExternalBooks(query string, ctx context.Context) ([]*Book, error) {
-	
 	externalBooks, err := s.provider.SearchBooks(query, 10, ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// Remove obvious duplicates
+	externalBooks = deduplicateExternalBooks(externalBooks)
 
 	authors := extractUniqueAuthors(externalBooks)
 
@@ -73,6 +73,18 @@ func (s *BooksService) processExternalBook(externalBook externalBookModel, autho
 		return nil, err
 	}
 
+	// Skip book if a book by the same authors with a very similar title exists
+	// TODO: inject threshold
+	exists, err := s.repo.checkSimilarBookExists(book.Title, book.AuthorIDs, 0.7, ctx, s.db)
+	if err != nil {
+		logger.Error("Failed to check for similar existing book", "title", book.Title, "error", err)
+		return nil, err
+	}
+	if exists {
+		logger.Info("Skipping book creation as similar book already exists", "title", book.Title)
+		return nil, nil
+	}
+
 	err = db.WithTx(ctx, s.db, func(tx *sql.Tx) error {
 		return s.CreateBookWithAuthors(book, tx, ctx)
 	})
@@ -83,45 +95,6 @@ func (s *BooksService) processExternalBook(externalBook externalBookModel, autho
 	}
 	logger.Info("Created book", "title", externalBook.Title, "id", book.ID)
 	return book, nil
-}
-
-func createBookFromExternal(externalBook externalBookModel, authorNameIDs map[string]string, logger *slog.Logger) (*Book, error) {
-	allAuthorsPresent := true
-	authorIDs := make([]string, 0, len(externalBook.Authors))
-	for _, authorName := range externalBook.Authors {
-		authorID, exists := authorNameIDs[authorName]
-		if !exists {
-			allAuthorsPresent = false
-			break
-		}
-		authorIDs = append(authorIDs, authorID)
-	}
-	if !allAuthorsPresent {
-		return nil, ErrNotAllAuthorsPresent
-	}
-	book, err := NewBook(externalBook.Title, authorIDs)
-	if err != nil {
-		logger.Error("Failed to create book entity", "title", externalBook.Title, "error", err)
-		return nil, err
-	}
-	return book, nil
-}
-
-func extractUniqueAuthors(books []externalBookModel) []string {
-	seen := make(map[string]struct{})
-
-	for _, book := range books {
-		for _, author := range book.Authors {
-			seen[author] = struct{}{}
-		}
-	}
-
-	uniqueAuthors := make([]string, 0, len(seen))
-	for author := range seen {
-		uniqueAuthors = append(uniqueAuthors, author)
-	}
-
-	return uniqueAuthors
 }
 
 // The service shouldn't know about how book authors are stored

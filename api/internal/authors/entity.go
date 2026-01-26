@@ -12,7 +12,7 @@ type Author struct {
 }
 
 func NewAuthor(name string) *Author {
-	normalisedName := normaliseAuthorName(name)
+	normalisedName := NormaliseAuthorName(name)
 	return &Author{
 		ID:             uuid.New().String(),
 		Name:           name,
@@ -22,7 +22,7 @@ func NewAuthor(name string) *Author {
 }
 
 func NewAuthorWithDuplicate(name string, duplicateID string) *Author {
-	normalisedName := normaliseAuthorName(name)
+	normalisedName := NormaliseAuthorName(name)
 	return &Author{
 		ID:             uuid.New().String(),
 		Name:           name,

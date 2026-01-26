@@ -4,6 +4,8 @@ import (
 	"bs-books-api/internal/db"
 	"context"
 	"database/sql"
+
+	"github.com/lib/pq"
 )
 
 type booksRepo struct{}
@@ -52,4 +54,32 @@ func (r *booksRepo) getBookByID(bookID string, ctx context.Context, db db.DBTX) 
 		book.AuthorIDs = append(book.AuthorIDs, authorID)
 	}
 	return &book, nil
+}
+
+func (r *booksRepo) checkSimilarBookExists(title string, authorIDs []string, similarityThreshold float64, ctx context.Context, db db.DBTX) (bool, error) {
+	if len(authorIDs) == 0 {
+		return false, nil
+	}
+
+	const query = `
+	SELECT 1
+	FROM books b
+	JOIN book_author ba ON b.id = ba.book_id
+	WHERE similarity(b.title, $1) >= $2
+	  AND ba.author_id = ANY($3)
+	LIMIT 1;
+	`
+
+	var exists int
+
+	err := db.QueryRowContext(ctx, query, title, similarityThreshold, pq.Array(authorIDs)).Scan(&exists)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return exists == 1, nil
 }

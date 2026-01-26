@@ -7,7 +7,7 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-func normaliseAuthorName(name string) string {
+func NormaliseAuthorName(name string) string {
 	name = strings.ToLower(strings.TrimSpace(name))
 
 	t := norm.NFD.String(name)

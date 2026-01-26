@@ -3,9 +3,10 @@ package books
 import "github.com/google/uuid"
 
 type Book struct {
-	ID        string
-	Title     string
-	AuthorIDs []string
+	ID              string
+	Title           string
+	NormalisedTitle string
+	AuthorIDs       []string
 }
 
 func NewBook(title string, authorIDs []string) (*Book, error) {
@@ -13,8 +14,9 @@ func NewBook(title string, authorIDs []string) (*Book, error) {
 		return nil, ErrNoAuthorsProvided
 	}
 	return &Book{
-		ID:        uuid.NewString(),
-		Title:     title,
-		AuthorIDs: authorIDs,
+		ID:              uuid.NewString(),
+		Title:           title,
+		NormalisedTitle: normaliseBookTitle(title),
+		AuthorIDs:       authorIDs,
 	}, nil
 }

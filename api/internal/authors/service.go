@@ -54,7 +54,7 @@ func (s *AuthorsService) processExternalAuthor(name string, ctx context.Context,
 	}
 
 	// No alias match, check normalised name and add alias if matched
-	normalisedName := normaliseAuthorName(name)
+	normalisedName := NormaliseAuthorName(name)
 
 	// Search for similar normalised names
 	similarAuthor, err := s.repo.searchByNormalisedName(normalisedName, s.similarityThreshold, ctx, s.db)
