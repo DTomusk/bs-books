@@ -8,5 +8,5 @@ type externalBookModel struct {
 }
 
 type BooksProvider interface {
-	SearchBooks(query string, ctx context.Context) ([]externalBookModel, error)
+	SearchBooks(query string, maxResults int, ctx context.Context) ([]externalBookModel, error)
 }

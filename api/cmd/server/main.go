@@ -2,6 +2,8 @@ package main
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/authors"
+	"bs-books-api/internal/books"
 	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
@@ -57,6 +59,17 @@ func main() {
 		return
 	}
 
+	slog.Info("Connected to database")
+
+	externalBooksHTTPClient := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        50,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     60 * time.Second,
+		},
+	}
+
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGINT,
@@ -65,20 +78,22 @@ func main() {
 	defer stop()
 
 	// DI for routes
-	userRepo := users.NewUserRepo()
-	userService := users.NewUserService(db, userRepo)
+	userService := users.NewUserService(db, users.NewUserRepo())
 	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
 	authService := auth.NewAuthService(db, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
+	authorService := authors.NewAuthorsService(db, authors.NewAuthorsRepo(), 0.8)
+
 	bookReader := queries.NewBookReader(db)
-	bookSearchService := search.NewBookSearchService(bookReader)
+	externalBookProvider := books.NewGoogleBooksProvider(externalBooksHTTPClient)
+	bookService := books.NewBooksService(db, books.NewBooksRepo(), externalBookProvider, authorService)
+	bookSearchService := search.NewBookSearchService(bookReader, bookService)
 	searchHandler := search.NewSearchHandler(bookSearchService)
 
-	ratingRepo := ratings.NewRatingRepo()
-	ratingService := ratings.NewRatingService(db, ratingRepo)
+	ratingService := ratings.NewRatingService(db, ratings.NewRatingRepo())
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
 	r := delivery.NewRouter(

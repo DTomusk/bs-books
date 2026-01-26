@@ -53,6 +53,8 @@ func (p *GoogleBooksProvider) queryAPI(query string, maxResults int, ctx context
 		return nil, err
 	}
 
+	req.Header.Set("User-Agent", "bs-books-api/1.0")
+
 	// TODO: consider making configurable
 	q := req.URL.Query()
 	q.Set("q", query)

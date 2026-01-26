@@ -2,6 +2,7 @@ package search
 
 import (
 	"bs-books-api/internal/delivery/response"
+	"bs-books-api/internal/queries"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,10 +30,10 @@ func (h *BookSearchHandler) SearchBooks(c *gin.Context) {
 		c.JSON(500, response.NewInternalServerError("Failed to search books"))
 		return
 	}
-	c.JSON(200, response.Success[[]BookResult]{
+	c.JSON(200, response.Success[[]queries.BookSearchItem]{
 		Data: page.Items,
 		Meta: response.PageMeta{
-			TotalItems: page.TotalItems,
+			TotalItems: page.Total,
 			TotalPages: page.TotalPages,
 			Page:       page.Page,
 			PageSize:   page.Size,
