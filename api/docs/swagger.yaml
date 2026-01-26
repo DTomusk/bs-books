@@ -20,23 +20,6 @@ definitions:
     - email
     - password
     type: object
-  books.BookListResponse:
-    description: Response containing a list of books
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/queries.BookResponse'
-        type: array
-    type: object
-  queries.BookResponse:
-    properties:
-      author_id:
-        type: string
-      id:
-        type: string
-      title:
-        type: string
-    type: object
   ratings.RatingRequest:
     properties:
       book_id:
@@ -59,6 +42,44 @@ definitions:
       error:
         $ref: '#/definitions/response.Error'
       meta: {}
+    type: object
+  search.AuthorSearchItem:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  search.BookSearchItem:
+    properties:
+      authors:
+        items:
+          $ref: '#/definitions/search.AuthorSearchItem'
+        type: array
+      id:
+        type: string
+      title:
+        type: string
+    type: object
+  search.BookSearchResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/search.BookSearchItem'
+        type: array
+      meta:
+        $ref: '#/definitions/search.PageMeta'
+    type: object
+  search.PageMeta:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
     type: object
   users.GetMeResponse:
     properties:
@@ -118,23 +139,45 @@ paths:
       summary: Register a new user
       tags:
       - auth
-  /books:
+  /books/search:
     get:
       consumes:
       - application/json
-      description: Get a list of all books
+      description: Search for books by title
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/books.BookListResponse'
-            type: array
-      summary: Get list of books
+            $ref: '#/definitions/search.BookSearchResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Search Books
       tags:
-      - books
+      - Books
   /ratings:
     post:
       consumes:

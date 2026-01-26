@@ -15,6 +15,19 @@ func NewSearchHandler(service *BookSearchService) *BookSearchHandler {
 	return &BookSearchHandler{service: service}
 }
 
+// SearchBooks godoc
+// @Summary Search Books
+// @Description Search for books by title
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Param query query string true "Search query"
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Success 200 {object} BookSearchResponse
+// @Failure 400 {object} response.ErrorResponse "Invalid request"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /books/search [get]
 func (h *BookSearchHandler) SearchBooks(c *gin.Context) {
 	var req BookSearchRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
