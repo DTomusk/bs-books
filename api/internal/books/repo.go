@@ -56,7 +56,7 @@ func (r *booksRepo) getBookByID(bookID string, ctx context.Context, db db.DBTX) 
 	return &book, nil
 }
 
-func (r *booksRepo) checkSimilarBookExists(title string, authorIDs []string, similarityThreshold float64, ctx context.Context, db db.DBTX) (bool, error) {
+func (r *booksRepo) checkSimilarBookExists(normalisedTitle string, authorIDs []string, similarityThreshold float64, ctx context.Context, db db.DBTX) (bool, error) {
 	if len(authorIDs) == 0 {
 		return false, nil
 	}
@@ -65,14 +65,14 @@ func (r *booksRepo) checkSimilarBookExists(title string, authorIDs []string, sim
 	SELECT 1
 	FROM books b
 	JOIN book_author ba ON b.id = ba.book_id
-	WHERE similarity(b.title, $1) >= $2
+	WHERE similarity(b.normalised_title, $1) >= $2
 	  AND ba.author_id = ANY($3)
 	LIMIT 1;
 	`
 
 	var exists int
 
-	err := db.QueryRowContext(ctx, query, title, similarityThreshold, pq.Array(authorIDs)).Scan(&exists)
+	err := db.QueryRowContext(ctx, query, normalisedTitle, similarityThreshold, pq.Array(authorIDs)).Scan(&exists)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

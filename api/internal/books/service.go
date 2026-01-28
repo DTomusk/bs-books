@@ -75,7 +75,7 @@ func (s *BooksService) processExternalBook(externalBook externalBookModel, autho
 
 	// Skip book if a book by the same authors with a very similar title exists
 	// TODO: inject threshold
-	exists, err := s.repo.checkSimilarBookExists(book.Title, book.AuthorIDs, 0.7, ctx, s.db)
+	exists, err := s.repo.checkSimilarBookExists(book.NormalisedTitle, book.AuthorIDs, 0.7, ctx, s.db)
 	if err != nil {
 		logger.Error("Failed to check for similar existing book", "title", book.Title, "error", err)
 		return nil, err
@@ -90,10 +90,8 @@ func (s *BooksService) processExternalBook(externalBook externalBookModel, autho
 	})
 
 	if err != nil {
-		logger.Error("Failed to create book", "title", externalBook.Title, "error", err)
 		return nil, err
 	}
-	logger.Info("Created book", "title", externalBook.Title, "id", book.ID)
 	return book, nil
 }
 

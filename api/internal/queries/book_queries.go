@@ -15,9 +15,10 @@ type AuthorSearchItem struct {
 }
 
 type BookSearchItem struct {
-	ID      string
-	Title   string
-	Authors []AuthorSearchItem
+	ID         string
+	Title      string
+	Similarity float64
+	Authors    []AuthorSearchItem
 }
 
 type BookSearchPage struct {
@@ -49,7 +50,8 @@ func (r *BookReader) SearchBooksQuery(queryStr string, page, pageSize, offset in
 	rb.id AS book_id,
 	rb.title AS book_title,
 	a.id AS author_id,
-	a.name AS author_name
+	a.name AS author_name,
+	rb.score AS book_score
 FROM ranked_books rb
 LEFT JOIN book_author ba ON rb.id = ba.book_id
 LEFT JOIN authors a ON ba.author_id = a.id
@@ -67,16 +69,18 @@ ORDER BY rb.score DESC, rb.title ASC;
 
 	for rows.Next() {
 		var bookID, bookTitle, authorID, authorName string
-		if err := rows.Scan(&bookID, &bookTitle, &authorID, &authorName); err != nil {
+		var bookScore float64
+		if err := rows.Scan(&bookID, &bookTitle, &authorID, &authorName, &bookScore); err != nil {
 			return nil, err
 		}
 
 		book, exists := bookMap[bookID]
 		if !exists {
 			book = &BookSearchItem{
-				ID:      bookID,
-				Title:   bookTitle,
-				Authors: []AuthorSearchItem{},
+				ID:         bookID,
+				Title:      bookTitle,
+				Similarity: bookScore,
+				Authors:    []AuthorSearchItem{},
 			}
 			bookMap[bookID] = book
 			order = append(order, bookID)

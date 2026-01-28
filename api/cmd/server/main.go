@@ -90,7 +90,7 @@ func main() {
 	bookReader := queries.NewBookReader(db)
 	externalBookProvider := books.NewGoogleBooksProvider(externalBooksHTTPClient)
 	bookService := books.NewBooksService(db, books.NewBooksRepo(), externalBookProvider, authorService)
-	bookSearchService := search.NewBookSearchService(bookReader, bookService)
+	bookSearchService := search.NewBookSearchService(db, bookReader, bookService, search.NewBookSearchRepo())
 	searchHandler := search.NewSearchHandler(bookSearchService)
 
 	ratingService := ratings.NewRatingService(db, ratings.NewRatingRepo())

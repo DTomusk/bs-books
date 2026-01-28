@@ -2,6 +2,7 @@ package search
 
 import (
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/db"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 	"context"
@@ -9,12 +10,24 @@ import (
 )
 
 type BookSearchService struct {
+	db          db.DBTX
 	reader      *queries.BookReader
 	bookService *books.BooksService
+	searchRepo  *BookSearchRepo
 }
 
-func NewBookSearchService(reader *queries.BookReader, bookService *books.BooksService) *BookSearchService {
-	return &BookSearchService{reader: reader, bookService: bookService}
+func NewBookSearchService(
+	db db.DBTX,
+	reader *queries.BookReader,
+	bookService *books.BooksService,
+	searchRepo *BookSearchRepo,
+) *BookSearchService {
+	return &BookSearchService{
+		db:          db,
+		reader:      reader,
+		bookService: bookService,
+		searchRepo:  searchRepo,
+	}
 }
 
 func (s *BookSearchService) SearchBooks(ctx context.Context, query string, page int, pageSize int) (*queries.BookSearchPage, error) {
@@ -26,9 +39,25 @@ func (s *BookSearchService) SearchBooks(ctx context.Context, query string, page 
 		return nil, err
 	}
 
-	if page == 1 && len(resultPage.Items) == 0 {
+	if page == 1 && (len(resultPage.Items) == 0 || resultPage.Items[0].Similarity < 0.5) {
 		// No results on first page, try to extract from external source
-		logger.Info("No local results, extracting from external source", "query", query)
+		logger.Info("Weak local results, extracting from external source", "query", query)
+
+		// Normalise search query
+		normalisedQuery := normaliseSearchQuery(query)
+
+		// Check external search query table to see if we've searched in last 24h
+		searchedToday, err := s.searchRepo.QuerySearchedToday(normalisedQuery, ctx, s.db)
+
+		if err != nil {
+			logger.Error("Error checking external search query history", "error", err.Error())
+			return resultPage, nil
+		}
+		if searchedToday {
+			logger.Info("Query searched recently, skipping external extraction", "query", query)
+			return resultPage, nil
+		}
+
 		books, err := s.bookService.ExtractExternalBooks(query, ctx)
 		if err != nil {
 			logger.Error("Error extracting external books", "error", err.Error())
@@ -43,6 +72,11 @@ func (s *BookSearchService) SearchBooks(ctx context.Context, query string, page 
 		resultPage, err = s.reader.SearchBooksQuery(query, page, pageSize, offset, ctx)
 		if err != nil {
 			return nil, err
+		}
+
+		err = s.searchRepo.LogExternalSearchQuery(normalisedQuery, ctx, s.db)
+		if err != nil {
+			logger.Error("Error logging external search query", "error", err.Error())
 		}
 	}
 
