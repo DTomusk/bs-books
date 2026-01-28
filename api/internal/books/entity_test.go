@@ -12,7 +12,7 @@ func TestNewBook(t *testing.T) {
 	authorIDs := []string{"author1", "author2"}
 
 	// Act
-	book, err := NewBook(title, authorIDs)
+	book, err := NewBook(title, authorIDs, "", "")
 
 	// Assert
 	require.NoError(t, err)
@@ -26,7 +26,7 @@ func TestNewBook_NoAuthors(t *testing.T) {
 	var authorIDs []string
 
 	// Act
-	book, err := NewBook(title, authorIDs)
+	book, err := NewBook(title, authorIDs, "", "")
 
 	// Assert
 	require.Nil(t, book)
@@ -39,7 +39,7 @@ func TestNewBook_EmptyAuthors(t *testing.T) {
 	authorIDs := []string{}
 
 	// Act
-	book, err := NewBook(title, authorIDs)
+	book, err := NewBook(title, authorIDs, "", "")
 
 	// Assert
 	require.Nil(t, book)

@@ -19,7 +19,7 @@ func createBookFromExternal(externalBook externalBookModel, authorNameIDs map[st
 	if !allAuthorsPresent {
 		return nil, ErrNotAllAuthorsPresent
 	}
-	book, err := books.NewBook(externalBook.Title, authorIDs)
+	book, err := books.NewBook(externalBook.Title, authorIDs, externalBook.ImageURL, externalBook.Synopsis)
 	if err != nil {
 		logger.Error("Failed to create book entity", "title", externalBook.Title, "error", err)
 		return nil, err

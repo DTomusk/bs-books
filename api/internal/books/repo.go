@@ -15,7 +15,7 @@ func NewBooksRepo() *booksRepo {
 }
 
 func (r *booksRepo) createBook(book *Book, ctx context.Context, db db.DBTX) error {
-	_, err := db.ExecContext(ctx, `INSERT INTO books (id, title) VALUES ($1, $2)`, book.ID, book.Title)
+	_, err := db.ExecContext(ctx, `INSERT INTO books (id, title, cover_img_url, synopsis) VALUES ($1, $2, $3, $4)`, book.ID, book.Title, book.ImageURL, book.Synopsis)
 	return err
 }
 
@@ -31,8 +31,8 @@ func (r *booksRepo) addAuthorsToBook(bookID string, authorIDs []string, ctx cont
 
 func (r *booksRepo) getBookByID(bookID string, ctx context.Context, db db.DBTX) (*Book, error) {
 	var book Book
-	row := db.QueryRowContext(ctx, `SELECT id, title FROM books WHERE id = $1`, bookID)
-	err := row.Scan(&book.ID, &book.Title)
+	row := db.QueryRowContext(ctx, `SELECT id, title, cover_img_url, synopsis FROM books WHERE id = $1`, bookID)
+	err := row.Scan(&book.ID, &book.Title, &book.ImageURL, &book.Synopsis)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

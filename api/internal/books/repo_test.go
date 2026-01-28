@@ -15,7 +15,7 @@ func TestCreateBook(t *testing.T) {
 		authorIDs := testutil.SeedAuthors(tx)
 		repo := NewBooksRepo()
 		ctx := context.Background()
-		book, err := NewBook("A New Book", authorIDs)
+		book, err := NewBook("A New Book", authorIDs, "http://example.com/image.jpg", "This is a synopsis.")
 		require.NoError(t, err)
 
 		// Act

@@ -17,8 +17,12 @@ type googleVolume struct {
 }
 
 type googleVolumeInfo struct {
-	Title   string   `json:"title"`
-	Authors []string `json:"authors"`
+	Title      string   `json:"title"`
+	Authors    []string `json:"authors"`
+	ImageLinks struct {
+		Thumbnail string `json:"thumbnail"`
+	} `json:"imageLinks"`
+	Description string `json:"description"`
 }
 
 type GoogleBooksProvider struct {
@@ -89,8 +93,10 @@ func mapGoogleToExternal(googleBooks []googleVolume) []externalBookModel {
 
 	for _, g := range googleBooks {
 		books = append(books, externalBookModel{
-			Title:   g.VolumeInfo.Title,
-			Authors: g.VolumeInfo.Authors,
+			Title:    g.VolumeInfo.Title,
+			Authors:  g.VolumeInfo.Authors,
+			ImageURL: g.VolumeInfo.ImageLinks.Thumbnail,
+			Synopsis: g.VolumeInfo.Description,
 		})
 	}
 

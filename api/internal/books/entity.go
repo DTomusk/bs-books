@@ -7,9 +7,11 @@ type Book struct {
 	Title           string
 	NormalisedTitle string
 	AuthorIDs       []string
+	ImageURL        string
+	Synopsis        string
 }
 
-func NewBook(title string, authorIDs []string) (*Book, error) {
+func NewBook(title string, authorIDs []string, imageURL string, synopsis string) (*Book, error) {
 	if len(authorIDs) == 0 {
 		return nil, ErrNoAuthorsProvided
 	}
@@ -18,5 +20,7 @@ func NewBook(title string, authorIDs []string) (*Book, error) {
 		Title:           title,
 		NormalisedTitle: NormaliseBookTitle(title),
 		AuthorIDs:       authorIDs,
+		ImageURL:        imageURL,
+		Synopsis:        synopsis,
 	}, nil
 }

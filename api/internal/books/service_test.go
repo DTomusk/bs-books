@@ -16,7 +16,7 @@ func TestCreateBookWithAuthors(t *testing.T) {
 		repo := NewBooksRepo()
 		ctx := context.Background()
 		service := NewBooksService(nil, repo)
-		book, err := NewBook("Test Book with Authors", authorIDs)
+		book, err := NewBook("Test Book with Authors", authorIDs, "http://example.com/image.jpg", "This is a test synopsis.")
 		require.NoError(t, err)
 
 		// Act

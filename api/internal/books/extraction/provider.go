@@ -3,8 +3,10 @@ package extraction
 import "context"
 
 type externalBookModel struct {
-	Title   string
-	Authors []string
+	Title    string
+	Authors  []string
+	ImageURL string
+	Synopsis string
 }
 
 type BooksProvider interface {
