@@ -11,7 +11,7 @@ import (
 func TestQueryGoogleAPI(t *testing.T) {
 	// Arrange
 	httpClient := http.DefaultClient
-	provider := NewGoogleBooksProvider(httpClient)
+	provider := NewGoogleBooksProvider(httpClient, "")
 	ctx := context.Background()
 
 	// Act
@@ -56,7 +56,7 @@ func TestMapGoogleToExternal(t *testing.T) {
 func TestSearchBooks(t *testing.T) {
 	// Arrange
 	httpClient := http.DefaultClient
-	provider := NewGoogleBooksProvider(httpClient)
+	provider := NewGoogleBooksProvider(httpClient, "")
 	ctx := context.Background()
 
 	// Act

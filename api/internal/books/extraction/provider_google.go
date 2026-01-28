@@ -23,11 +23,13 @@ type googleVolumeInfo struct {
 
 type GoogleBooksProvider struct {
 	httpClient *http.Client
+	apiKey     string
 }
 
-func NewGoogleBooksProvider(client *http.Client) *GoogleBooksProvider {
+func NewGoogleBooksProvider(client *http.Client, apiKey string) *GoogleBooksProvider {
 	return &GoogleBooksProvider{
 		httpClient: client,
+		apiKey:     apiKey,
 	}
 }
 
@@ -46,7 +48,7 @@ func (p *GoogleBooksProvider) queryAPI(query string, maxResults int, ctx context
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		baseURL+query,
+		baseURL,
 		nil,
 	)
 	if err != nil {
@@ -55,11 +57,11 @@ func (p *GoogleBooksProvider) queryAPI(query string, maxResults int, ctx context
 
 	req.Header.Set("User-Agent", "bs-books-api/1.0")
 
-	// TODO: consider making configurable
 	q := req.URL.Query()
 	q.Set("q", query)
 	q.Set("maxResults", fmt.Sprintf("%d", maxResults))
 	q.Set("startIndex", "0")
+	q.Set("key", p.apiKey)
 
 	req.URL.RawQuery = q.Encode()
 
