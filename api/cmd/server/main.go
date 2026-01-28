@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/auth"
 	"bs-books-api/internal/authors"
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/books/extraction"
 	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
@@ -88,9 +89,9 @@ func main() {
 	authorService := authors.NewAuthorsService(db, authors.NewAuthorsRepo(), 0.8)
 
 	bookReader := queries.NewBookReader(db)
-	externalBookProvider := books.NewGoogleBooksProvider(externalBooksHTTPClient)
-	bookService := books.NewBooksService(db, books.NewBooksRepo(), externalBookProvider, authorService)
-	bookSearchService := search.NewBookSearchService(db, bookReader, bookService, search.NewBookSearchRepo())
+	bookService := books.NewBooksService(db, books.NewBooksRepo())
+	bookExtractionService := extraction.NewBookExtractionService(db, extraction.NewGoogleBooksProvider(externalBooksHTTPClient), authorService)
+	bookSearchService := search.NewBookSearchService(db, bookReader, bookService, search.NewBookSearchRepo(), bookExtractionService)
 	searchHandler := search.NewSearchHandler(bookSearchService)
 
 	ratingService := ratings.NewRatingService(db, ratings.NewRatingRepo())

@@ -1,6 +1,9 @@
-package books
+package extraction
 
-import "bs-books-api/internal/authors"
+import (
+	"bs-books-api/internal/authors"
+	"bs-books-api/internal/books"
+)
 
 func deduplicateExternalBooks(books []externalBookModel) []externalBookModel {
 	seen := make(map[string]externalBookModel)
@@ -18,7 +21,7 @@ func deduplicateExternalBooks(books []externalBookModel) []externalBookModel {
 }
 
 func generateDedupeKey(book externalBookModel) string {
-	normalisedTitle := normaliseBookTitle(book.Title)
+	normalisedTitle := books.NormaliseBookTitle(book.Title)
 
 	var joinedAuthors string
 

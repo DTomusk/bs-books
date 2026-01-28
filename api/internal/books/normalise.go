@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func normaliseBookTitle(title string) string {
+func NormaliseBookTitle(title string) string {
 	title = strings.ToLower(title)
 	title = strings.TrimSpace(title)
 

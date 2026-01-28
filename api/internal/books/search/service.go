@@ -2,6 +2,7 @@ package search
 
 import (
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/books/extraction"
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
@@ -10,10 +11,11 @@ import (
 )
 
 type BookSearchService struct {
-	db          db.DBTX
-	reader      *queries.BookReader
-	bookService *books.BooksService
-	searchRepo  *BookSearchRepo
+	db                    db.DBTX
+	reader                *queries.BookReader
+	bookService           *books.BooksService
+	searchRepo            *BookSearchRepo
+	bookExtractionService *extraction.BookExtractionService
 }
 
 func NewBookSearchService(
@@ -21,12 +23,14 @@ func NewBookSearchService(
 	reader *queries.BookReader,
 	bookService *books.BooksService,
 	searchRepo *BookSearchRepo,
+	bookExtractionService *extraction.BookExtractionService,
 ) *BookSearchService {
 	return &BookSearchService{
-		db:          db,
-		reader:      reader,
-		bookService: bookService,
-		searchRepo:  searchRepo,
+		db:                    db,
+		reader:                reader,
+		bookService:           bookService,
+		searchRepo:            searchRepo,
+		bookExtractionService: bookExtractionService,
 	}
 }
 
@@ -82,11 +86,17 @@ func (s *BookSearchService) searchExternalBooks(ctx context.Context, query strin
 		return nil
 	}
 
-	_, err = s.bookService.ExtractExternalBooks(normalisedQuery, ctx)
+	books, err := s.bookExtractionService.ExtractExternalBooks(normalisedQuery, ctx)
 	if err != nil {
 		return err
 	}
 
+	err = s.bookService.CreateBooksWithAuthors(books, ctx)
+	if err != nil {
+		return err
+	}
+
+	// If there's a problem upstream, the search won't log
 	err = s.searchRepo.LogExternalSearchQuery(normalisedQuery, ctx, s.db)
 	if err != nil {
 		return err

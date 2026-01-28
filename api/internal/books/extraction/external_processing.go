@@ -1,8 +1,11 @@
-package books
+package extraction
 
-import "log/slog"
+import (
+	"bs-books-api/internal/books"
+	"log/slog"
+)
 
-func createBookFromExternal(externalBook externalBookModel, authorNameIDs map[string]string, logger *slog.Logger) (*Book, error) {
+func createBookFromExternal(externalBook externalBookModel, authorNameIDs map[string]string, logger *slog.Logger) (*books.Book, error) {
 	allAuthorsPresent := true
 	authorIDs := make([]string, 0, len(externalBook.Authors))
 	for _, authorName := range externalBook.Authors {
@@ -16,7 +19,7 @@ func createBookFromExternal(externalBook externalBookModel, authorNameIDs map[st
 	if !allAuthorsPresent {
 		return nil, ErrNotAllAuthorsPresent
 	}
-	book, err := NewBook(externalBook.Title, authorIDs)
+	book, err := books.NewBook(externalBook.Title, authorIDs)
 	if err != nil {
 		logger.Error("Failed to create book entity", "title", externalBook.Title, "error", err)
 		return nil, err

@@ -16,8 +16,8 @@ func TestNormaliseBookTitle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := normaliseBookTitle(tt.name); got != tt.expected {
-				t.Errorf("normaliseBookTitle() = %v, want %v", got, tt.expected)
+			if got := NormaliseBookTitle(tt.name); got != tt.expected {
+				t.Errorf("NormaliseBookTitle() = %v, want %v", got, tt.expected)
 			}
 		})
 	}

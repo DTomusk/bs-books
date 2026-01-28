@@ -16,7 +16,7 @@ func NewBook(title string, authorIDs []string) (*Book, error) {
 	return &Book{
 		ID:              uuid.NewString(),
 		Title:           title,
-		NormalisedTitle: normaliseBookTitle(title),
+		NormalisedTitle: NormaliseBookTitle(title),
 		AuthorIDs:       authorIDs,
 	}, nil
 }
