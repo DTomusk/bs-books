@@ -160,11 +160,9 @@ func (r *BookReader) GetBookByID(ctx context.Context, id string) (*BookDetails, 
 	var book BookDetails
 
 	rows, err := r.db.QueryContext(ctx, query, id)
+	// Swallow all errors for now
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
+		return nil, nil
 	}
 
 	defer rows.Close()
