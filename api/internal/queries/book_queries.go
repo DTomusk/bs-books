@@ -3,6 +3,7 @@ package queries
 import (
 	"bs-books-api/internal/db"
 	"context"
+	"database/sql"
 )
 
 type BookReader struct {
@@ -74,8 +75,10 @@ ORDER BY rb.score DESC, rb.title ASC;
 	order := make([]string, 0)
 
 	for rows.Next() {
-		var bookID, bookTitle, authorID, authorName, bookImageURL, bookSynopsis string
+		var bookID, bookTitle, authorID, authorName string
 		var bookScore float64
+		var bookImageURL sql.NullString
+		var bookSynopsis sql.NullString
 		if err := rows.Scan(&bookID, &bookTitle, &authorID, &authorName, &bookScore, &bookImageURL, &bookSynopsis); err != nil {
 			return nil, err
 		}
@@ -86,8 +89,8 @@ ORDER BY rb.score DESC, rb.title ASC;
 				ID:         bookID,
 				Title:      bookTitle,
 				Similarity: bookScore,
-				ImageURL:   bookImageURL,
-				Synopsis:   bookSynopsis,
+				ImageURL:   nullString(bookImageURL),
+				Synopsis:   nullString(bookSynopsis),
 				Authors:    []AuthorSearchItem{},
 			}
 			bookMap[bookID] = book
@@ -123,4 +126,11 @@ ORDER BY rb.score DESC, rb.title ASC;
 		Page:       page,
 		Size:       pageSize,
 	}, nil
+}
+
+func nullString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
 }

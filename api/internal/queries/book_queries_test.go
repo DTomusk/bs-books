@@ -28,5 +28,6 @@ func TestSearchBooks_OneExactResult(t *testing.T) {
 		require.Equal(t, 1, books.Page)
 		require.Equal(t, 1, books.Size)
 		require.Equal(t, 1, books.TotalPages)
+		require.Equal(t, 1.0, books.Items[0].Similarity)
 	})
 }

@@ -10,14 +10,18 @@ func TestNewBook(t *testing.T) {
 	// Arrange
 	title := "Test Book"
 	authorIDs := []string{"author1", "author2"}
+	synopsis := "This is a test synopsis."
+	imageURL := "http://example.com/image.jpg"
 
 	// Act
-	book, err := NewBook(title, authorIDs, "", "")
+	book, err := NewBook(title, authorIDs, imageURL, synopsis)
 
 	// Assert
 	require.NoError(t, err)
 	require.Equal(t, title, book.Title)
 	require.Equal(t, authorIDs, book.AuthorIDs)
+	require.Equal(t, synopsis, book.Synopsis)
+	require.Equal(t, imageURL, book.ImageURL)
 }
 
 func TestNewBook_NoAuthors(t *testing.T) {
