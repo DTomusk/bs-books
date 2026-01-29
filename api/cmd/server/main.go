@@ -2,16 +2,20 @@ package main
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/authors"
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/books/extraction"
+	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/delivery"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 	"bs-books-api/internal/ratings"
 	"bs-books-api/internal/users"
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -39,14 +43,32 @@ func main() {
 		return
 	}
 
+	logger := logging.New(cfg.ENV)
+	slog.SetDefault(logger)
+
+	slog.Info("Configuration loaded", "env", cfg.ENV)
+
 	// Connect to and ping database on startup
 	db, err := sql.Open("postgres", cfg.DB_URL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		slog.Error("Failed to connect to database", "error", err)
+		return
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
+		slog.Error("Failed to ping database", "error", err)
+		return
+	}
+
+	slog.Info("Connected to database")
+
+	externalBooksHTTPClient := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        50,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     60 * time.Second,
+		},
 	}
 
 	ctx, stop := signal.NotifyContext(
@@ -57,24 +79,27 @@ func main() {
 	defer stop()
 
 	// DI for routes
-	userRepo := users.NewUserRepo()
-	userService := users.NewUserService(db, userRepo)
+	userService := users.NewUserService(db, users.NewUserRepo())
 	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
 	authService := auth.NewAuthService(db, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
-	bookReader := queries.NewBookReader(db)
-	bookHandler := books.NewBookHandler(bookReader)
+	authorService := authors.NewAuthorsService(db, authors.NewAuthorsRepo(), 0.8)
 
-	ratingRepo := ratings.NewRatingRepo()
-	ratingService := ratings.NewRatingService(db, ratingRepo)
+	bookReader := queries.NewBookReader(db)
+	bookService := books.NewBooksService(db, books.NewBooksRepo())
+	bookExtractionService := extraction.NewBookExtractionService(db, extraction.NewGoogleBooksProvider(externalBooksHTTPClient, cfg.GOOGLE_BOOKS_API_KEY), authorService)
+	bookSearchService := search.NewBookSearchService(db, bookReader, bookService, search.NewBookSearchRepo(), bookExtractionService)
+	searchHandler := search.NewSearchHandler(bookSearchService)
+
+	ratingService := ratings.NewRatingService(db, ratings.NewRatingRepo())
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
 	r := delivery.NewRouter(
 		authHandler,
-		bookHandler,
+		searchHandler,
 		ratingHandler,
 		userHandler,
 		jwtService,
@@ -87,22 +112,23 @@ func main() {
 
 	// Run server in goroutine
 	go func() {
-		log.Printf("Starting server on port \n 8080")
+		slog.Info("Starting server on port", "port", 8080)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			slog.Error("listen", "error", err)
+			return
 		}
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server
 	<-ctx.Done()
-	log.Println("Shutting down server...")
+	slog.Info("Shutting down server...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 
-	log.Println("Server exiting")
+	slog.Info("Server exiting")
 }

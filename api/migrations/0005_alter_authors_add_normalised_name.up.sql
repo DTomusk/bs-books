@@ -1,0 +1,1 @@
+ALTER TABLE authors ADD COLUMN normalised_name TEXT;
