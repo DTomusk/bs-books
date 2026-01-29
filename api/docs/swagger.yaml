@@ -20,6 +20,28 @@ definitions:
     - email
     - password
     type: object
+  books.AuthorSearchItem:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  books.BookDetailsResponse:
+    properties:
+      authors:
+        items:
+          $ref: '#/definitions/books.AuthorSearchItem'
+        type: array
+      id:
+        type: string
+      image_url:
+        type: string
+      synopsis:
+        type: string
+      title:
+        type: string
+    type: object
   ratings.RatingRequest:
     properties:
       book_id:
@@ -139,6 +161,35 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /books/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve book details by its ID
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/books.BookDetailsResponse'
+        "404":
+          description: Book not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get Book by ID
+      tags:
+      - Books
   /books/search:
     get:
       consumes:

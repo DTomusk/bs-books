@@ -93,6 +93,7 @@ func main() {
 	bookExtractionService := extraction.NewBookExtractionService(db, extraction.NewGoogleBooksProvider(externalBooksHTTPClient, cfg.GOOGLE_BOOKS_API_KEY), authorService)
 	bookSearchService := search.NewBookSearchService(db, bookReader, bookService, search.NewBookSearchRepo(), bookExtractionService)
 	searchHandler := search.NewSearchHandler(bookSearchService)
+	bookHandler := books.NewBookHandler(bookReader)
 
 	ratingService := ratings.NewRatingService(db, ratings.NewRatingRepo())
 	ratingHandler := ratings.NewRatingHandler(ratingService)
@@ -103,6 +104,7 @@ func main() {
 		ratingHandler,
 		userHandler,
 		jwtService,
+		bookHandler,
 	)
 
 	srv := &http.Server{

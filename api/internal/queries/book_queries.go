@@ -32,6 +32,14 @@ type BookSearchPage struct {
 	Size       int
 }
 
+type BookDetails struct {
+	ID       string
+	Title    string
+	ImageURL string
+	Synopsis string
+	Authors  []AuthorSearchItem
+}
+
 func NewBookReader(db db.DBTX) *BookReader {
 	return &BookReader{db: db}
 }
@@ -132,4 +140,54 @@ func nullString(ns sql.NullString) string {
 		return ns.String
 	}
 	return ""
+}
+
+func (r *BookReader) GetBookByID(ctx context.Context, id string) (*BookDetails, error) {
+	const query = `
+	SELECT 
+		b.id,
+		b.title,
+		b.cover_img_url,
+		b.synopsis,
+		a.id AS author_id,
+		a.name AS author_name
+	FROM books b
+	INNER JOIN book_author ba ON b.id = ba.book_id
+	INNER JOIN authors a ON ba.author_id = a.id
+	WHERE b.id = $1;
+	`
+
+	var book BookDetails
+
+	rows, err := r.db.QueryContext(ctx, query, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var bookID, bookTitle, authorID, authorName string
+		var bookImageURL, bookSynopsis sql.NullString
+		if err := rows.Scan(&bookID, &bookTitle, &bookImageURL, &bookSynopsis, &authorID, &authorName); err != nil {
+			return nil, err
+		}
+		// If this is the first iteration, initialize the book details
+		if book.ID == "" {
+			book.ID = bookID
+			book.Title = bookTitle
+			book.ImageURL = nullString(bookImageURL)
+			book.Synopsis = nullString(bookSynopsis)
+			book.Authors = []AuthorSearchItem{}
+		}
+		book.Authors = append(book.Authors, AuthorSearchItem{
+			ID:   authorID,
+			Name: authorName,
+		})
+	}
+
+	return &book, nil
 }
