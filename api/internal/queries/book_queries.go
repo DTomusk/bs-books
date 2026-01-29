@@ -189,5 +189,9 @@ func (r *BookReader) GetBookByID(ctx context.Context, id string) (*BookDetails, 
 		})
 	}
 
+	if book.ID == "" {
+		return nil, nil
+	}
+
 	return &book, nil
 }
