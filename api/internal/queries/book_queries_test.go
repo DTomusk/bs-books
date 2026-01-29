@@ -31,3 +31,38 @@ func TestSearchBooks_OneExactResult(t *testing.T) {
 		require.Equal(t, 1.0, books.Items[0].Similarity)
 	})
 }
+
+func TestGetBookByID_Found(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		testutil.SeedAuthors(tx)
+		booksIds := testutil.SeedBooks(tx)
+		ctx := context.Background()
+		reader := NewBookReader(tx)
+
+		// Act
+		book, err := reader.GetBookByID(ctx, booksIds[0])
+
+		// Assert
+		require.NoError(t, err)
+		require.NotNil(t, book)
+		require.Equal(t, "Big Fists", book.Title)
+	})
+}
+
+func TestGetBookByID_NotFound(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		testutil.SeedAuthors(tx)
+		testutil.SeedBooks(tx)
+		ctx := context.Background()
+		reader := NewBookReader(tx)
+
+		// Act
+		book, err := reader.GetBookByID(ctx, "non-existent-id")
+
+		// Assert
+		require.NoError(t, err)
+		require.Nil(t, book)
+	})
+}

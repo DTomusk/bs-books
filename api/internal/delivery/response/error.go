@@ -34,6 +34,10 @@ func NewInternalServerError(message string) ErrorResponse {
 	return NewError("internal_server_error", message)
 }
 
+func NewNotFoundError(message string) ErrorResponse {
+	return NewError("not_found", message)
+}
+
 var (
 	ErrInvalidRequest = NewError("invalid_request", "The request is invalid.")
 	ErrUnauthorized   = NewError("unauthorized", "unauthorized")

@@ -2,6 +2,7 @@ package search
 
 import (
 	"bs-books-api/internal/delivery/response"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,7 @@ func NewSearchHandler(service *BookSearchService) *BookSearchHandler {
 // @Router /books/search [get]
 func (h *BookSearchHandler) SearchBooks(c *gin.Context) {
 	var req BookSearchRequest
+	logger := logging.FromContext(c.Request.Context())
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(400, response.ErrInvalidRequest)
 		return
@@ -40,6 +42,7 @@ func (h *BookSearchHandler) SearchBooks(c *gin.Context) {
 	page, err := h.service.SearchBooks(ctx, req.Query, req.PagedRequest.Page, req.PagedRequest.PageSize)
 
 	if err != nil {
+		logger.Error("Failed to search books", "error", err)
 		c.JSON(500, response.NewInternalServerError("Failed to search books"))
 		return
 	}

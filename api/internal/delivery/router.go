@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/books"
 	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/ratings"
@@ -19,6 +20,7 @@ func NewRouter(
 	ratingHandler *ratings.RatingHandler,
 	userHandler *users.UserHandler,
 	jwtService *auth.JWTService,
+	bookHandler *books.BookHandler,
 ) *gin.Engine {
 	r := gin.New()
 	r.Use(logging.RequestLoggerMiddleware)
@@ -42,6 +44,8 @@ func NewRouter(
 
 	booksRoutes := api.Group("/books")
 	{
+		booksRoutes.GET("/:id", bookHandler.GetBookByID)
+
 		searchRoutes := booksRoutes.Group("/search")
 		{
 			searchRoutes.GET("", bookSearchHandler.SearchBooks)

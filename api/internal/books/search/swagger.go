@@ -6,9 +6,11 @@ type BookSearchResponse struct {
 }
 
 type BookSearchItem struct {
-	ID      string             `json:"id"`
-	Title   string             `json:"title"`
-	Authors []AuthorSearchItem `json:"authors"`
+	ID         string             `json:"id"`
+	Title      string             `json:"title"`
+	Similarity float64            `json:"similarity"`
+	ImageURL   string             `json:"image_url"`
+	Authors    []AuthorSearchItem `json:"authors"`
 }
 
 type AuthorSearchItem struct {
