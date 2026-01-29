@@ -45,9 +45,9 @@ func (r *BookReader) SearchBooksQuery(queryStr string, page, pageSize, offset in
         b.title,
 		b.cover_img_url,
 		b.synopsis,
-        similarity(b.title, $1) AS score
+        similarity(b.normalised_title, $1) AS score
     FROM books b
-    WHERE b.title % $1
+    WHERE b.normalised_title % $1
     ORDER BY score DESC
     LIMIT $2 OFFSET $3
 )
@@ -77,8 +77,7 @@ ORDER BY rb.score DESC, rb.title ASC;
 	for rows.Next() {
 		var bookID, bookTitle, authorID, authorName string
 		var bookScore float64
-		var bookImageURL sql.NullString
-		var bookSynopsis sql.NullString
+		var bookImageURL, bookSynopsis sql.NullString
 		if err := rows.Scan(&bookID, &bookTitle, &authorID, &authorName, &bookScore, &bookImageURL, &bookSynopsis); err != nil {
 			return nil, err
 		}
@@ -110,7 +109,7 @@ ORDER BY rb.score DESC, rb.title ASC;
 
 	// Get total count
 	const countQuery = `
-	SELECT COUNT(*) FROM books WHERE title % $1;`
+	SELECT COUNT(*) FROM books WHERE normalised_title % $1;`
 
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, queryStr).Scan(&total); err != nil {

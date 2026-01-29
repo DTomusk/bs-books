@@ -27,6 +27,7 @@ func NewBookExtractionService(
 }
 
 func (s *BookExtractionService) ExtractExternalBooks(query string, ctx context.Context) ([]*books.Book, error) {
+	logger := logging.FromContext(ctx)
 	externalBooks, err := s.provider.SearchBooks(query, 10, ctx)
 	if err != nil {
 		return nil, err
@@ -52,27 +53,16 @@ func (s *BookExtractionService) ExtractExternalBooks(query string, ctx context.C
 	extractedBooks := make([]*books.Book, 0, len(externalBooks))
 
 	for _, externalBook := range externalBooks {
-		book, err := s.processExternalBook(externalBook, authorNameIDs, ctx)
-		if err == nil {
-			extractedBooks = append(extractedBooks, book)
+		book, err := createBookFromExternal(externalBook, authorNameIDs, logger)
+		if err != nil && err == ErrNotAllAuthorsPresent {
+			logger.Info("Skipping book creation as not all authors are present", "title", externalBook.Title)
+			continue
 		}
+		if err != nil {
+			logger.Error("Failed to process external book", "title", externalBook.Title, "error", err)
+			continue
+		}
+		extractedBooks = append(extractedBooks, book)
 	}
 	return extractedBooks, nil
-}
-
-func (s *BookExtractionService) processExternalBook(externalBook externalBookModel, authorNameIDs map[string]string, ctx context.Context) (*books.Book, error) {
-	logger := logging.FromContext(ctx)
-
-	book, err := createBookFromExternal(externalBook, authorNameIDs, logger)
-
-	if err != nil {
-		if err == ErrNotAllAuthorsPresent {
-			logger.Info("Skipping book creation as not all authors are present", "title", externalBook.Title)
-			return nil, err
-		}
-		logger.Error("Failed to create book from external data", "title", externalBook.Title, "error", err)
-		return nil, err
-	}
-
-	return book, nil
 }
