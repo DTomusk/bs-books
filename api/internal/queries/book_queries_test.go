@@ -18,7 +18,7 @@ func TestSearchBooks_OneExactResult(t *testing.T) {
 		reader := NewBookReader(tx)
 
 		// Act
-		books, err := reader.SearchBooksQuery("Big Fists", 1, 1, 0, ctx)
+		books, err := reader.SearchBooksQuery("big fists", 1, 1, 0, ctx)
 
 		// Assert
 		require.NoError(t, err)

@@ -36,7 +36,7 @@ func NewBookReader(db db.DBTX) *BookReader {
 	return &BookReader{db: db}
 }
 
-func (r *BookReader) SearchBooksQuery(queryStr string, page, pageSize, offset int, ctx context.Context) (*BookSearchPage, error) {
+func (r *BookReader) SearchBooksQuery(normalisedQuery string, page, pageSize, offset int, ctx context.Context) (*BookSearchPage, error) {
 	// Search books
 	const booksQuery = `
 	WITH ranked_books AS (
@@ -65,7 +65,7 @@ LEFT JOIN authors a ON ba.author_id = a.id
 ORDER BY rb.score DESC, rb.title ASC;
 	`
 
-	rows, err := r.db.QueryContext(ctx, booksQuery, queryStr, pageSize, offset)
+	rows, err := r.db.QueryContext(ctx, booksQuery, normalisedQuery, pageSize, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ ORDER BY rb.score DESC, rb.title ASC;
 	SELECT COUNT(*) FROM books WHERE normalised_title % $1;`
 
 	var total int
-	if err := r.db.QueryRowContext(ctx, countQuery, queryStr).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, countQuery, normalisedQuery).Scan(&total); err != nil {
 		return nil, err
 	}
 
