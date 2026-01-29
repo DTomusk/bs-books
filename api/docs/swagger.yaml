@@ -80,6 +80,10 @@ definitions:
         type: array
       id:
         type: string
+      image_url:
+        type: string
+      similarity:
+        type: number
       title:
         type: string
     type: object

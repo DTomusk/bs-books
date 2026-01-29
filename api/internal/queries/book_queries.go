@@ -20,7 +20,6 @@ type BookSearchItem struct {
 	Title      string
 	Similarity float64
 	ImageURL   string
-	Synopsis   string
 	Authors    []AuthorSearchItem
 }
 
@@ -52,7 +51,6 @@ func (r *BookReader) SearchBooksQuery(normalisedQuery string, page, pageSize, of
         b.id,
         b.title,
 		b.cover_img_url,
-		b.synopsis,
         similarity(b.normalised_title, $1) AS score
     FROM books b
     WHERE b.normalised_title % $1
@@ -65,8 +63,7 @@ func (r *BookReader) SearchBooksQuery(normalisedQuery string, page, pageSize, of
 	a.id AS author_id,
 	a.name AS author_name,
 	rb.score AS book_score,
-	rb.cover_img_url AS book_image_url,
-	rb.synopsis AS book_synopsis
+	rb.cover_img_url AS book_image_url
 FROM ranked_books rb
 LEFT JOIN book_author ba ON rb.id = ba.book_id
 LEFT JOIN authors a ON ba.author_id = a.id
@@ -85,8 +82,8 @@ ORDER BY rb.score DESC, rb.title ASC;
 	for rows.Next() {
 		var bookID, bookTitle, authorID, authorName string
 		var bookScore float64
-		var bookImageURL, bookSynopsis sql.NullString
-		if err := rows.Scan(&bookID, &bookTitle, &authorID, &authorName, &bookScore, &bookImageURL, &bookSynopsis); err != nil {
+		var bookImageURL sql.NullString
+		if err := rows.Scan(&bookID, &bookTitle, &authorID, &authorName, &bookScore, &bookImageURL); err != nil {
 			return nil, err
 		}
 
@@ -97,7 +94,6 @@ ORDER BY rb.score DESC, rb.title ASC;
 				Title:      bookTitle,
 				Similarity: bookScore,
 				ImageURL:   nullString(bookImageURL),
-				Synopsis:   nullString(bookSynopsis),
 				Authors:    []AuthorSearchItem{},
 			}
 			bookMap[bookID] = book

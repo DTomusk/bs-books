@@ -379,6 +379,12 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
+                "similarity": {
+                    "type": "number"
+                },
                 "title": {
                     "type": "string"
                 }
