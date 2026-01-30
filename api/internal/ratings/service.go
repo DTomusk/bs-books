@@ -20,8 +20,13 @@ func NewRatingService(db db.DBTX, r *ratingRepo, bs *books.BooksService) *Rating
 	}
 }
 
-func (s *RatingService) CreateRating(bookID string, userID string, heartScore float64, pooScore float64, ctx context.Context) error {
+func (s *RatingService) CreateRating(bookID string, userID string, heartScore float64, pooScore float64, review string, ctx context.Context) error {
+	// validate and create rating object
 	rating, err := newRating(bookID, userID, heartScore, pooScore)
+
+	if err != nil {
+		return err
+	}
 
 	// ensure book exists
 	exists, err := s.bookService.BookExists(ctx, bookID)

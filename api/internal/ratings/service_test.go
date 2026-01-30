@@ -30,6 +30,7 @@ func TestServiceCreateRating(t *testing.T) {
 			userIDs[0],
 			4.5,
 			2.0,
+			"",
 			ctx,
 		)
 
@@ -57,6 +58,7 @@ func TestServiceCreateRating_BookNotFound(t *testing.T) {
 			userIds[0],
 			4.5,
 			2.0,
+			"",
 			ctx,
 		)
 
@@ -84,6 +86,7 @@ func TestServiceCreateRating_UserNotFound(t *testing.T) {
 			"non-existent-user-id",
 			4.5,
 			2.0,
+			"",
 			ctx,
 		)
 
@@ -111,6 +114,7 @@ func TestServiceCreateRating_RatingAlreadyExists(t *testing.T) {
 			userIds[0],
 			4.5,
 			2.0,
+			"",
 			ctx,
 		)
 		require.NoError(t, err)
@@ -121,6 +125,7 @@ func TestServiceCreateRating_RatingAlreadyExists(t *testing.T) {
 			userIds[0],
 			3.0,
 			1.0,
+			"",
 			ctx,
 		)
 
@@ -148,6 +153,7 @@ func TestServiceCreateRating_SameBookDifferentUsers(t *testing.T) {
 			userIds[0],
 			4.5,
 			2.0,
+			"",
 			ctx,
 		)
 		require.NoError(t, err)
@@ -158,6 +164,7 @@ func TestServiceCreateRating_SameBookDifferentUsers(t *testing.T) {
 			userIds[1],
 			3.5,
 			1.0,
+			"",
 			ctx,
 		)
 
@@ -184,6 +191,7 @@ func TestServiceCreateRating_DifferentBooksSameUser(t *testing.T) {
 			userIds[0],
 			4.5,
 			2.0,
+			"",
 			ctx,
 		)
 		require.NoError(t, err)
@@ -194,6 +202,7 @@ func TestServiceCreateRating_DifferentBooksSameUser(t *testing.T) {
 			userIds[0],
 			3.5,
 			1.0,
+			"",
 			ctx,
 		)
 
