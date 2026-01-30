@@ -20,8 +20,8 @@ func NewRatingService(db db.DBTX, r *ratingRepo, bs *books.BooksService) *Rating
 	}
 }
 
-func (s *RatingService) CreateRating(bookID string, heartScore float64, pooScore float64, ctx context.Context) error {
-	rating, err := newRating(bookID, heartScore, pooScore)
+func (s *RatingService) CreateRating(bookID string, userID string, heartScore float64, pooScore float64, ctx context.Context) error {
+	rating, err := newRating(bookID, userID, heartScore, pooScore)
 
 	// ensure book exists
 	exists, err := s.bookService.BookExists(ctx, bookID)
@@ -29,6 +29,16 @@ func (s *RatingService) CreateRating(bookID string, heartScore float64, pooScore
 	// TODO: consider if we want to separate errors
 	if err != nil || !exists {
 		return ErrBookNotFound
+	}
+
+	// Ensure user hasn't rated this book before
+	existingRating, err := s.repo.getRatingByUserAndBook(userID, bookID, ctx, s.db)
+	if err != nil {
+		return err
+	}
+
+	if existingRating != nil {
+		return ErrRatingAlreadyExists
 	}
 
 	err = s.repo.create(rating, ctx, s.db)
