@@ -8,14 +8,14 @@ import (
 )
 
 type BooksService struct {
-	db   *sql.DB
-	repo *booksRepo
+	txRunner db.TxRunner
+	repo     *booksRepo
 }
 
-func NewBooksService(db *sql.DB, repo *booksRepo) *BooksService {
+func NewBooksService(txRunner db.TxRunner, repo *booksRepo) *BooksService {
 	return &BooksService{
-		db:   db,
-		repo: repo,
+		txRunner: txRunner,
+		repo:     repo,
 	}
 }
 
@@ -23,7 +23,7 @@ func (s *BooksService) CreateBooksWithAuthors(books []*Book, ctx context.Context
 	logger := logging.FromContext(ctx)
 	logger.Info("Creating multiple books", "count", len(books))
 	for _, book := range books {
-		err := db.WithTx(ctx, s.db, func(tx *sql.Tx) error {
+		err := s.txRunner.WithTx(ctx, func(tx *sql.Tx) error {
 			return s.createBookWithAuthors(book, tx, ctx)
 		})
 		if err != nil {
@@ -54,4 +54,8 @@ func (s *BooksService) createBookWithAuthors(book *Book, tx *sql.Tx, ctx context
 	}
 
 	return nil
+}
+
+func (s *BooksService) BookExists(ctx context.Context, bookID string) (bool, error) {
+	return s.repo.getBookExists(bookID, ctx, s.txRunner.DB())
 }

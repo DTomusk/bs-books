@@ -83,3 +83,16 @@ func (r *booksRepo) checkSimilarBookExists(normalisedTitle string, authorIDs []s
 
 	return exists == 1, nil
 }
+
+func (r *booksRepo) getBookExists(bookID string, ctx context.Context, db db.DBTX) (bool, error) {
+	var exists int
+	err := db.QueryRowContext(ctx, `SELECT 1 FROM books WHERE id = $1`, bookID).Scan(&exists)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return exists == 1, nil
+}
