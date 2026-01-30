@@ -3,20 +3,24 @@ package ratings
 import (
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/db"
+	"bs-books-api/internal/reviews"
 	"context"
+	"database/sql"
 )
 
 type RatingService struct {
-	db          db.DBTX
-	repo        *ratingRepo
-	bookService *books.BooksService
+	txRunner      db.TxRunner
+	repo          *ratingRepo
+	bookService   *books.BooksService
+	reviewService *reviews.ReviewService
 }
 
-func NewRatingService(db db.DBTX, r *ratingRepo, bs *books.BooksService) *RatingService {
+func NewRatingService(txRunner db.TxRunner, r *ratingRepo, bs *books.BooksService, rs *reviews.ReviewService) *RatingService {
 	return &RatingService{
-		db:          db,
-		repo:        r,
-		bookService: bs,
+		txRunner:      txRunner,
+		repo:          r,
+		bookService:   bs,
+		reviewService: rs,
 	}
 }
 
@@ -37,7 +41,7 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 	}
 
 	// Ensure user hasn't rated this book before
-	existingRating, err := s.repo.getRatingByUserAndBook(userID, bookID, ctx, s.db)
+	existingRating, err := s.repo.getRatingByUserAndBook(userID, bookID, ctx, s.txRunner.DB())
 	if err != nil {
 		return err
 	}
@@ -46,7 +50,21 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 		return ErrRatingAlreadyExists
 	}
 
-	err = s.repo.create(rating, ctx, s.db)
+	// Consider transaction here
+	err = s.txRunner.WithTx(ctx, func(tx *sql.Tx) error {
+		err = s.repo.create(rating, ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		err = s.reviewService.OptionallyCreateReview(bookID, userID, rating.ID, review, ctx, tx)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return err

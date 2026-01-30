@@ -12,6 +12,7 @@ import (
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/users"
 	"context"
 	"database/sql"
@@ -97,7 +98,8 @@ func main() {
 	searchHandler := search.NewSearchHandler(bookSearchService)
 	bookHandler := books.NewBookHandler(bookReader)
 
-	ratingService := ratings.NewRatingService(database, ratings.NewRatingRepo(), bookService)
+	reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
 	r := delivery.NewRouter(

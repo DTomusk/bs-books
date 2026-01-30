@@ -2,6 +2,7 @@ package ratings
 
 import (
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/testutil"
 	"context"
 	"database/sql"
@@ -17,7 +18,10 @@ func TestServiceCreateRating(t *testing.T) {
 
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
-		testService := NewRatingService(tx, r, bookService)
+
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+
+		testService := NewRatingService(txRunner, r, bookService, reviewService)
 		testutil.SeedAuthors(tx)
 		bookIDs := testutil.SeedBooks(tx)
 		userIDs := testutil.SeedUsers(tx)
@@ -45,7 +49,8 @@ func TestServiceCreateRating_BookNotFound(t *testing.T) {
 		r := NewRatingRepo()
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
-		testService := NewRatingService(tx, r, bookService)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+		testService := NewRatingService(txRunner, r, bookService, reviewService)
 		testutil.SeedAuthors(tx)
 		testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
@@ -74,7 +79,8 @@ func TestServiceCreateRating_UserNotFound(t *testing.T) {
 		r := NewRatingRepo()
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
-		testService := NewRatingService(tx, r, bookService)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+		testService := NewRatingService(txRunner, r, bookService, reviewService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		testutil.SeedUsers(tx)
@@ -101,7 +107,8 @@ func TestServiceCreateRating_RatingAlreadyExists(t *testing.T) {
 		r := NewRatingRepo()
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
-		testService := NewRatingService(tx, r, bookService)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+		testService := NewRatingService(txRunner, r, bookService, reviewService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
@@ -141,7 +148,8 @@ func TestServiceCreateRating_SameBookDifferentUsers(t *testing.T) {
 		r := NewRatingRepo()
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
-		testService := NewRatingService(tx, r, bookService)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+		testService := NewRatingService(txRunner, r, bookService, reviewService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
@@ -179,7 +187,8 @@ func TestServiceCreateRating_DifferentBooksSameUser(t *testing.T) {
 		r := NewRatingRepo()
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
-		testService := NewRatingService(tx, r, bookService)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+		testService := NewRatingService(txRunner, r, bookService, reviewService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
