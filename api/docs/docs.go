@@ -215,6 +215,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/reviews": {
+            "get": {
+                "description": "Retrieve all reviews associated with a specific book",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Get reviews for a book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "book_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/reviews.ReviewListingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "security": [
@@ -332,6 +390,12 @@ const docTemplate = `{
                 },
                 "poo_score": {
                     "type": "number"
+                },
+                "review": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -354,6 +418,57 @@ const docTemplate = `{
                     "$ref": "#/definitions/response.Error"
                 },
                 "meta": {}
+            }
+        },
+        "response.PageMeta": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_items": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "reviews.ReviewListingItem": {
+            "type": "object",
+            "properties": {
+                "heart_score": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "poo_score": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "reviews.ReviewListingResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/reviews.ReviewListingItem"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/response.PageMeta"
+                }
             }
         },
         "search.AuthorSearchItem": {
@@ -400,24 +515,7 @@ const docTemplate = `{
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/search.PageMeta"
-                }
-            }
-        },
-        "search.PageMeta": {
-            "type": "object",
-            "properties": {
-                "page": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                },
-                "total_pages": {
-                    "type": "integer"
+                    "$ref": "#/definitions/response.PageMeta"
                 }
             }
         },
