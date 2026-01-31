@@ -1,6 +1,7 @@
 package reviews
 
 import (
+	"bs-books-api/internal/delivery/request"
 	"bs-books-api/internal/delivery/response"
 	"bs-books-api/internal/queries"
 
@@ -21,23 +22,29 @@ func NewReviewHandler(reader *queries.ReviewReader) *ReviewHandler {
 // @Tags reviews
 // @Accept  json
 // @Produce  json
-// @Param book_id path string true "Book ID"
+// @Param id path string true "Book ID"
 // @Param page query int false "Page number" default(1)
 // @Param page_size query int false "Page size" default(10)
 // @Success 200 {object} ReviewListingResponse
 // @Failure 400 {object} response.ErrorResponse "Invalid request"
 // @Failure 500 {object} response.ErrorResponse "Internal server error"
-// @Router /reviews [get]
+// @Router /books/{id}/reviews [get]
 func (h *ReviewHandler) GetReviewsByBookID(c *gin.Context) {
-	var req ReviewListingRequest
-	if err := c.ShouldBindQuery(&req); err != nil {
+	var uriReq ReviewListingUriRequest
+	if err := c.ShouldBindUri(&uriReq); err != nil {
 		c.JSON(400, response.ErrInvalidRequest)
 		return
 	}
-	req.PagedRequest.Normalise()
+
+	var queryReq request.PagedRequest
+	if err := c.ShouldBindQuery(&queryReq); err != nil {
+		c.JSON(400, response.ErrInvalidRequest)
+		return
+	}
+	queryReq.Normalise()
 
 	ctx := c.Request.Context()
-	page, err := h.reader.GetReviewsByBookIDQuery(ctx, req.BookID, req.PagedRequest.Page, req.PagedRequest.PageSize, req.PagedRequest.Offset())
+	page, err := h.reader.GetReviewsByBookIDQuery(ctx, uriReq.BookID, queryReq.Page, queryReq.PageSize, queryReq.Offset())
 	if err != nil {
 		c.JSON(500, response.NewInternalServerError("Failed to get reviews"))
 		return
@@ -51,5 +58,4 @@ func (h *ReviewHandler) GetReviewsByBookID(c *gin.Context) {
 			PageSize:   page.Size,
 		},
 	})
-
 }

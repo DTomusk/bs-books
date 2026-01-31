@@ -184,38 +184,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/ratings": {
-            "post": {
-                "description": "Create a new rating for a book",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ratings"
-                ],
-                "summary": "Create a new rating",
-                "parameters": [
-                    {
-                        "description": "Rating to create",
-                        "name": "rating",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ratings.RatingRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created"
-                    }
-                }
-            }
-        },
-        "/reviews": {
+        "/books/{id}/reviews": {
             "get": {
                 "description": "Retrieve all reviews associated with a specific book",
                 "consumes": [
@@ -232,7 +201,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Book ID",
-                        "name": "book_id",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
@@ -269,6 +238,37 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
+                    }
+                }
+            }
+        },
+        "/ratings": {
+            "post": {
+                "description": "Create a new rating for a book",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ratings"
+                ],
+                "summary": "Create a new rating",
+                "parameters": [
+                    {
+                        "description": "Rating to create",
+                        "name": "rating",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ratings.RatingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
                     }
                 }
             }

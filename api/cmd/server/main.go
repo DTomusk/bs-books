@@ -99,6 +99,8 @@ func main() {
 	bookHandler := books.NewBookHandler(bookReader)
 
 	reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+	reviewReader := queries.NewReviewReader(database)
+	reviewHandler := reviews.NewReviewHandler(reviewReader)
 	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
@@ -107,6 +109,7 @@ func main() {
 		searchHandler,
 		ratingHandler,
 		userHandler,
+		reviewHandler,
 		jwtService,
 		bookHandler,
 	)

@@ -220,6 +220,45 @@ paths:
       summary: Get Book by ID
       tags:
       - Books
+  /books/{id}/reviews:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all reviews associated with a specific book
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/reviews.ReviewListingResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get reviews for a book
+      tags:
+      - reviews
   /books/search:
     get:
       consumes:
@@ -279,45 +318,6 @@ paths:
       summary: Create a new rating
       tags:
       - ratings
-  /reviews:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve all reviews associated with a specific book
-      parameters:
-      - description: Book ID
-        in: path
-        name: book_id
-        required: true
-        type: string
-      - default: 1
-        description: Page number
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: Page size
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/reviews.ReviewListingResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: Get reviews for a book
-      tags:
-      - reviews
   /users/me:
     get:
       consumes:

@@ -36,12 +36,11 @@ func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID strin
 		r.id,
 		rating.heart_score,
 		rating.poo_score,
-		r.text,
-		r.user_id
+		r.review,
+		rating.user_id
 	FROM reviews r
 	JOIN ratings rating ON r.rating_id = rating.id
-	WHERE r.book_id = $1
-	ORDER BY r.created_at DESC
+	WHERE rating.book_id = $1
 	LIMIT $2 OFFSET $3
 	`
 
