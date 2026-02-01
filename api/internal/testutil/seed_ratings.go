@@ -1,17 +1,19 @@
 package testutil
 
-import "database/sql"
+import (
+	"database/sql"
 
-func SeedRatingsAndReviews(tx *sql.Tx) []string {
-	tx.Exec(`INSERT INTO ratings (id, book_id, user_id, score, difficulty, comment) VALUES
-		('63681e21-08d4-43e1-b0b6-8d6f75a9b8b3', '73681e21-08d4-43e1-b0b6-8d6f75a9b8b1', '83681e21-08d4-43e1-b0b6-8d6f75a9b8b1', 4.5, 3.0, 'Great book!'),
-		('73681e21-08d4-43e1-b0b6-8d6f75a9b8b4', '73681e21-08d4-43e1-b0b6-8d6f75a9b8b1', '93681e21-08d4-43e1-b0b6-8d6f75a9b8b2', 3.0, 4.0, 'Good read.')`)
+	"github.com/google/uuid"
+)
 
-	tx.Exec(`INSERT INTO reviews (id, rating_id, review) VALUES
-		('93681e21-08d4-43e1-b0b6-8d6f75a9b8b5', '63681e21-08d4-43e1-b0b6-8d6f75a9b8b3', 'Pee pee poo poo'),
-		('a3681e21-08d4-43e1-b0b6-8d6f75a9b8b6', '73681e21-08d4-43e1-b0b6-8d6f75a9b8b4', 'I did not like it.')`)
-	return []string{
-		"63681e21-08d4-43e1-b0b6-8d6f75a9b8b3",
-		"73681e21-08d4-43e1-b0b6-8d6f75a9b8b4",
-	}
+func SeedRatingsAndReviews(tx *sql.Tx, book_id, user_id string, heart_score, poo_score float64) []string {
+	rating_id := uuid.NewString()
+	rating_query := `INSERT INTO ratings (id, book_id, user_id, heart_score, poo_score) VALUES ($1, $2, $3, $4, $5)`
+	tx.Exec(rating_query, rating_id, book_id, user_id, heart_score, poo_score)
+
+	review_id := uuid.NewString()
+	review_query := `INSERT INTO reviews (id, rating_id, review) VALUES ($1, $2, $3)`
+	tx.Exec(review_query, review_id, rating_id, "Great book!")
+
+	return []string{rating_id}
 }

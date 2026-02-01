@@ -39,6 +39,7 @@ func TestGetReviewsByBookID_BookWithNoReviews_EmptyPage(t *testing.T) {
 		require.NotNil(t, page)
 		require.Equal(t, 0, page.Total)
 		require.Equal(t, 0, len(page.Items))
+		require.Equal(t, 0, page.TotalPages)
 	})
 }
 
@@ -49,7 +50,10 @@ func TestGetReviewsByBookID_BookWithReviews_ReturnsPage(t *testing.T) {
 		ctx := context.Background()
 		testutil.SeedAuthors(tx)
 		bookIDs := testutil.SeedBooks(tx)
-		testutil.SeedRatingsAndReviews(tx)
+		userIDs := testutil.SeedUsers(tx)
+
+		// Seed two reviews for the book
+		testutil.SeedRatingsAndReviews(tx, bookIDs[0], userIDs[0], 4.5, 1.0)
 
 		// Act
 		page, err := reader.GetReviewsByBookIDQuery(ctx, bookIDs[0], 1, 10, 0)
@@ -57,8 +61,9 @@ func TestGetReviewsByBookID_BookWithReviews_ReturnsPage(t *testing.T) {
 		// Assert
 		require.NoError(t, err)
 		require.NotNil(t, page)
-		require.Equal(t, 2, page.Total)
-		require.Equal(t, 2, len(page.Items))
+		require.Equal(t, 1, page.Total)
+		require.Equal(t, 1, len(page.Items))
 		require.Equal(t, "Great book!", page.Items[0].Text)
+		require.Equal(t, 1, page.TotalPages)
 	})
 }

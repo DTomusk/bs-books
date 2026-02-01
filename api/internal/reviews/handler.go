@@ -3,6 +3,7 @@ package reviews
 import (
 	"bs-books-api/internal/delivery/request"
 	"bs-books-api/internal/delivery/response"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 
 	"github.com/gin-gonic/gin"
@@ -44,8 +45,11 @@ func (h *ReviewHandler) GetReviewsByBookID(c *gin.Context) {
 	queryReq.Normalise()
 
 	ctx := c.Request.Context()
+	logger := logging.FromContext(ctx)
+	logger.Info("Fetching reviews for book", "book_id", uriReq.BookID, "page", queryReq.Page, "page_size", queryReq.PageSize)
 	page, err := h.reader.GetReviewsByBookIDQuery(ctx, uriReq.BookID, queryReq.Page, queryReq.PageSize, queryReq.Offset())
 	if err != nil {
+		logger.Error("Failed to get reviews for book ID", "book_id", uriReq.BookID, "error", err)
 		c.JSON(500, response.NewInternalServerError("Failed to get reviews"))
 		return
 	}

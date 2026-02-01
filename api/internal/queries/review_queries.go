@@ -30,6 +30,7 @@ type ReviewItem struct {
 	UserID string
 }
 
+// TODO: add created at for ordering
 func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID string, page, pageSize, offset int) (*ReviewPage, error) {
 	const reviewsQuery = `
 	SELECT
@@ -41,6 +42,7 @@ func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID strin
 	FROM reviews r
 	JOIN ratings rating ON r.rating_id = rating.id
 	WHERE rating.book_id = $1
+	ORDER BY r.id DESC
 	LIMIT $2 OFFSET $3
 	`
 
@@ -61,9 +63,26 @@ func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID strin
 		reviews = append(reviews, review)
 	}
 
+	const countQuery = `
+	SELECT COUNT(*)
+	FROM reviews r
+	JOIN ratings rating ON r.rating_id = rating.id
+	WHERE rating.book_id = $1
+	`
+
+	var total int
+	err = r.db.QueryRowContext(ctx, countQuery, bookID).Scan(&total)
+	if err != nil {
+		return nil, err
+	}
+
+	totalPages := (total + pageSize - 1) / pageSize
+
 	return &ReviewPage{
-		Items: reviews,
-		Page:  page,
-		Size:  pageSize,
+		Items:      reviews,
+		Page:       page,
+		Size:       pageSize,
+		Total:      total,
+		TotalPages: totalPages,
 	}, nil
 }
