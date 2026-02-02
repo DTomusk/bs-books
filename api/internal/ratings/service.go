@@ -57,7 +57,11 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 			return err
 		}
 
-		err = s.reviewService.OptionallyCreateReview(bookID, userID, rating.ID, review, ctx, tx)
+		if review == "" {
+			return nil
+		}
+
+		err = s.reviewService.CreateReview(bookID, userID, rating.ID, review, ctx, tx)
 
 		if err != nil {
 			return err
