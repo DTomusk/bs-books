@@ -219,3 +219,31 @@ func TestServiceCreateRating_DifferentBooksSameUser(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestServiceCreateRatingWithReview_Success(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		r := NewRatingRepo()
+		txRunner := testutil.NewTestTxRunner(tx)
+		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+		testService := NewRatingService(txRunner, r, bookService, reviewService)
+		testutil.SeedAuthors(tx)
+		bookIds := testutil.SeedBooks(tx)
+		userIds := testutil.SeedUsers(tx)
+		ctx := context.Background()
+
+		// Act
+		err := testService.CreateRating(
+			bookIds[0],
+			userIds[0],
+			4.5,
+			2.0,
+			"This is a great book!",
+			ctx,
+		)
+
+		// Assert
+		require.NoError(t, err)
+	})
+}

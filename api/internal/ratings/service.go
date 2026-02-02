@@ -67,7 +67,7 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 			return nil
 		}
 
-		err = s.reviewService.CreateReview(bookID, userID, rating.ID, review, ctx, tx)
+		err = s.reviewService.CreateReview(rating.ID, review, ctx, tx)
 
 		if err != nil {
 			logger.Error("Failed to create review", "error", err)

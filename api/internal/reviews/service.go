@@ -16,7 +16,7 @@ func NewReviewService(repo *ReviewRepo) *ReviewService {
 }
 
 // Note: we create this in a transaction with rating creation
-func (s *ReviewService) CreateReview(bookID, userID, ratingID, reviewText string, ctx context.Context, tx db.DBTX) error {
+func (s *ReviewService) CreateReview(ratingID, reviewText string, ctx context.Context, tx db.DBTX) error {
 	review, err := newReview(ratingID, reviewText)
 
 	if err != nil {
