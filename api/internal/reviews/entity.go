@@ -1,20 +1,20 @@
 package reviews
 
+import "github.com/google/uuid"
+
 type Review struct {
-	BookID string
-	UserID string
+	ID string
 	// Note: each review is associated with a rating
 	RatingID string
 	Text     string
 }
 
-func newReview(bookID, userID, ratingID, text string) (*Review, error) {
+func newReview(ratingID, text string) (*Review, error) {
 	if text == "" {
 		return nil, ErrEmptyReviewText
 	}
 	return &Review{
-		BookID:   bookID,
-		UserID:   userID,
+		ID:       uuid.NewString(),
 		RatingID: ratingID,
 		Text:     text,
 	}, nil

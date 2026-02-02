@@ -61,7 +61,11 @@ func NewRouter(
 
 	ratingsRoutes := api.Group("/ratings")
 	{
-		ratingsRoutes.POST("", ratingHandler.CreateRating)
+		protected := ratingsRoutes.Group("")
+		protected.Use(auth.AuthMiddleware(jwtService))
+		{
+			protected.POST("", ratingHandler.CreateRating)
+		}
 	}
 
 	usersRoutes := api.Group("/users")

@@ -244,6 +244,11 @@ const docTemplate = `{
         },
         "/ratings": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new rating for a book",
                 "consumes": [
                     "application/json"
@@ -392,9 +397,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "review": {
-                    "type": "string"
-                },
-                "user_id": {
                     "type": "string"
                 }
             }
