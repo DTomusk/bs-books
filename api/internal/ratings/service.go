@@ -3,6 +3,7 @@ package ratings
 import (
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/db"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/reviews"
 	"context"
 	"database/sql"
@@ -25,10 +26,12 @@ func NewRatingService(txRunner db.TxRunner, r *ratingRepo, bs *books.BooksServic
 }
 
 func (s *RatingService) CreateRating(bookID string, userID string, heartScore float64, pooScore float64, review string, ctx context.Context) error {
-	// validate and create rating object
+	logger := logging.FromContext(ctx)
+	logger.Info("Creating rating", "bookID", bookID, "userID", userID, "heartScore", heartScore, "pooScore", pooScore)
 	rating, err := newRating(bookID, userID, heartScore, pooScore)
 
 	if err != nil {
+		logger.Error("Failed to create rating object", "error", err)
 		return err
 	}
 
@@ -37,23 +40,26 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 
 	// TODO: consider if we want to separate errors
 	if err != nil || !exists {
+		logger.Error("Book not found or error checking book existence", "error", err, "exists", exists)
 		return ErrBookNotFound
 	}
 
 	// Ensure user hasn't rated this book before
 	existingRating, err := s.repo.getRatingByUserAndBook(userID, bookID, ctx, s.txRunner.DB())
 	if err != nil {
+		logger.Error("Failed to check for existing rating", "error", err)
 		return err
 	}
 
 	if existingRating != nil {
+		logger.Info("User has already rated this book", "userID", userID, "bookID", bookID)
 		return ErrRatingAlreadyExists
 	}
 
-	// Consider transaction here
 	err = s.txRunner.WithTx(ctx, func(tx *sql.Tx) error {
 		err = s.repo.create(rating, ctx, tx)
 		if err != nil {
+			logger.Error("Failed to create rating", "error", err)
 			return err
 		}
 
@@ -64,6 +70,7 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 		err = s.reviewService.CreateReview(bookID, userID, rating.ID, review, ctx, tx)
 
 		if err != nil {
+			logger.Error("Failed to create review", "error", err)
 			return err
 		}
 
