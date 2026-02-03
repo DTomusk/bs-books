@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -67,6 +68,7 @@ func main() {
 
 			if event == nil {
 				slog.Info("No event to process")
+				time.Sleep(5 * time.Second)
 				continue
 			}
 
