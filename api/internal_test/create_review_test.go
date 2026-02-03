@@ -62,7 +62,7 @@ func TestRegisterLoginPostRatingWithReview_Success(t *testing.T) {
 		bookService := books.NewBooksService(txRunner, bookRepo)
 		reviewRepo := reviews.NewReviewRepo()
 		reviewService := reviews.NewReviewService(reviewRepo)
-		ratingService := ratings.NewRatingService(txRunner, ratingRepo, bookService, reviewService)
+		ratingService := ratings.NewRatingService(txRunner, ratingRepo, bookService, reviewService, nil)
 		router := setupCreateReviewRouter(jwtService, authService, userHandler, ratingService)
 
 		// Seed authors and books

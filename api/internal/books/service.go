@@ -59,3 +59,8 @@ func (s *BooksService) createBookWithAuthors(book *Book, tx *sql.Tx, ctx context
 func (s *BooksService) BookExists(ctx context.Context, bookID string) (bool, error) {
 	return s.repo.getBookExists(bookID, ctx, s.txRunner.DB())
 }
+
+// Update the rating metadata on a book when a rating gets created
+func (s *BooksService) AddRatingToBook(bookID string, heartScore float64, pooScore float64, ctx context.Context) error {
+	return nil
+}

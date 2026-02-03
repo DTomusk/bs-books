@@ -9,6 +9,7 @@ import (
 	"bs-books-api/internal/config"
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/delivery"
+	"bs-books-api/internal/events"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 	"bs-books-api/internal/ratings"
@@ -83,6 +84,9 @@ func main() {
 	// DI for routes
 	txRunner := db.NewDBTxRunner(database)
 
+	eventRepo := events.NewEventRepo()
+	eventService := events.NewEventService(txRunner, eventRepo, 5)
+
 	userService := users.NewUserService(database, users.NewUserRepo())
 	userHandler := users.NewUserHandler(userService)
 
@@ -101,7 +105,7 @@ func main() {
 	reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
 	reviewReader := queries.NewReviewReader(database)
 	reviewHandler := reviews.NewReviewHandler(reviewReader)
-	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService)
+	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
 	r := delivery.NewRouter(

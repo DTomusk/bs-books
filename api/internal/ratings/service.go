@@ -3,6 +3,7 @@ package ratings
 import (
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/db"
+	"bs-books-api/internal/events"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/reviews"
 	"context"
@@ -14,14 +15,22 @@ type RatingService struct {
 	repo          *ratingRepo
 	bookService   *books.BooksService
 	reviewService *reviews.ReviewService
+	eventService  *events.EventService
 }
 
-func NewRatingService(txRunner db.TxRunner, r *ratingRepo, bs *books.BooksService, rs *reviews.ReviewService) *RatingService {
+func NewRatingService(
+	txRunner db.TxRunner,
+	r *ratingRepo,
+	bs *books.BooksService,
+	rs *reviews.ReviewService,
+	es *events.EventService,
+) *RatingService {
 	return &RatingService{
 		txRunner:      txRunner,
 		repo:          r,
 		bookService:   bs,
 		reviewService: rs,
+		eventService:  es,
 	}
 }
 
@@ -82,6 +91,15 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 	}
 
 	// queue background task to update book rating stats
+	err = s.eventService.PublishEvent(
+		ctx,
+		"rating.created",
+		bookID,
+		map[string]float64{
+			"heart_score": rating.HeartScore,
+			"poo_score":   rating.PooScore,
+		},
+	)
 
 	return nil
 }
