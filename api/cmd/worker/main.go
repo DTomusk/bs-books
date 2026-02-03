@@ -68,6 +68,7 @@ func main() {
 
 			if event == nil {
 				slog.Info("No event to process")
+				// TODO: add to env
 				time.Sleep(5 * time.Second)
 				continue
 			}

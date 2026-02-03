@@ -85,6 +85,7 @@ func main() {
 	txRunner := db.NewDBTxRunner(database)
 
 	eventRepo := events.NewEventRepo()
+	// TODO: make configurable
 	eventService := events.NewEventService(txRunner, eventRepo, 5)
 
 	userService := users.NewUserService(database, users.NewUserRepo())
@@ -94,6 +95,7 @@ func main() {
 	authService := auth.NewAuthService(database, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
+	// TODO: make thresholds configurable
 	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), 0.8)
 	bookReader := queries.NewBookReader(database)
 	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
