@@ -15,15 +15,16 @@ type Event struct {
 	OccurredAt  time.Time
 }
 
-func newEvent(eventType string, payload any) (*Event, error) {
+func newEvent(eventType, aggregateID string, payload any) (*Event, error) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
 	return &Event{
-		ID:         uuid.NewString(),
-		Type:       eventType,
-		Payload:    json.RawMessage(data),
-		OccurredAt: time.Now().UTC(),
+		ID:          uuid.NewString(),
+		Type:        eventType,
+		AggregateID: aggregateID,
+		Payload:     json.RawMessage(data),
+		OccurredAt:  time.Now().UTC(),
 	}, nil
 }

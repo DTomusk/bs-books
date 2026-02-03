@@ -6,21 +6,23 @@ import (
 )
 
 type EventService struct {
-	txRunner db.TxRunner
-	repo     *eventRepo
+	txRunner    db.TxRunner
+	repo        *eventRepo
+	maxAttempts int
 }
 
 // Trev was here
-func NewEventService(txRunner db.TxRunner, repo *eventRepo) *EventService {
+func NewEventService(txRunner db.TxRunner, repo *eventRepo, maxAttempts int) *EventService {
 	return &EventService{
-		txRunner: txRunner,
-		repo:     repo,
+		txRunner:    txRunner,
+		repo:        repo,
+		maxAttempts: maxAttempts,
 	}
 }
 
 // Write event to queue
-func (s *EventService) EnqueueEvent(ctx context.Context, eventType string, payload interface{}) error {
-	event, err := newEvent(eventType, payload)
+func (s *EventService) PublishEvent(ctx context.Context, eventType, aggregateID string, payload any) error {
+	event, err := newEvent(eventType, aggregateID, payload)
 	if err != nil {
 		return err
 	}
@@ -34,6 +36,10 @@ func (s *EventService) EnqueueEvent(ctx context.Context, eventType string, paylo
 }
 
 // Get next event to process from queue
-func (s *EventService) DequeueEvent(ctx context.Context) error {
-	return nil
+func (s *EventService) DequeueEvent(ctx context.Context) (*Event, error) {
+	event, err := s.repo.dequeueEvent(ctx, s.txRunner.DB(), s.maxAttempts)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
 }
