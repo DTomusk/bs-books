@@ -33,10 +33,6 @@ func (s *BooksService) CreateBooksWithAuthors(books []*Book, ctx context.Context
 	return nil
 }
 
-// The service shouldn't know about how book authors are stored
-// But at the same time, the repo shouldn't know about transactions
-// The service coordinates the transaction
-// We want the book to fail if an author association fails
 func (s *BooksService) createBookWithAuthors(book *Book, tx *sql.Tx, ctx context.Context) error {
 	logger := logging.FromContext(ctx)
 	logger.Info("Creating book", "title", book.Title, "id", book.ID, "authors", book.AuthorIDs)
@@ -61,6 +57,19 @@ func (s *BooksService) BookExists(ctx context.Context, bookID string) (bool, err
 }
 
 // Update the rating metadata on a book when a rating gets created
-func (s *BooksService) AddRatingToBook(bookID string, heartScore float64, pooScore float64, ctx context.Context) error {
+func (s *BooksService) AddRatingToBook(ctx context.Context, tx *sql.Tx, bookID string, heartScore float64, pooScore float64) error {
+	averageHeartScore, averagePooScore, totalRatings, err := s.repo.getBookRatingStats(bookID, ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	newTotalRatings := totalRatings + 1
+	newAverageHeartScore := ((averageHeartScore * float64(totalRatings)) + heartScore) / float64(newTotalRatings)
+	newAveragePooScore := ((averagePooScore * float64(totalRatings)) + pooScore) / float64(newTotalRatings)
+
+	err = s.repo.updateBookRatingStats(bookID, newAverageHeartScore, newAveragePooScore, newTotalRatings, ctx, tx)
+	if err != nil {
+		return err
+	}
 	return nil
 }

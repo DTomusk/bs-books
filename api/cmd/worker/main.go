@@ -6,6 +6,7 @@ import (
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/events"
 	"bs-books-api/internal/logging"
+	"bs-books-api/internal/ratings"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -60,6 +61,14 @@ func main() {
 	go func() {
 		slog.Info("Starting event processor...")
 		for {
+			select {
+			case <-time.After(5 * time.Second):
+			case <-ctx.Done():
+				slog.Info("Event processor shutting down")
+				return
+			default:
+			}
+
 			event, err := eventService.DequeueEvent(ctx)
 			if err != nil {
 				slog.Error("Failed to dequeue event", "error", err)
@@ -74,34 +83,34 @@ func main() {
 			}
 
 			switch event.Type {
-			case "rating.created":
-				bookID := event.AggregateID
+			case ratings.EventTypeRatingCreated:
+				err = txRunner.WithTx(ctx, func(tx *sql.Tx) error {
+					bookID := event.AggregateID
 
-				// Unmarshal the JSON payload into a map
-				var data map[string]float64
-				err := json.Unmarshal(event.Payload, &data)
+					var payload ratings.RatingCreatedPayload
+					err := json.Unmarshal(event.Payload, &payload)
+					if err != nil {
+						slog.Error("Failed to unmarshal event payload", "error", err, "eventID", event.ID)
+						return err
+					}
+
+					heartScore := payload.HeartScore
+					pooScore := payload.PooScore
+
+					slog.Info("Processing rating created event", "bookID", bookID, "heartScore", heartScore, "pooScore", pooScore)
+					err = bookService.AddRatingToBook(ctx, tx, bookID, heartScore, pooScore)
+					if err != nil {
+						slog.Error("Failed to add rating to book", "error", err, "bookID", bookID)
+						return err
+					}
+					return nil
+				})
 				if err != nil {
-					slog.Error("Failed to unmarshal event payload", "error", err, "eventID", event.ID)
+					slog.Error("Failed to process rating created event", "error", err, "eventID", event.ID)
 					continue
 				}
-
-				heartScore, ok := data["heart_score"]
-				if !ok {
-					slog.Error("Invalid heart_score in event data", "eventID", event.ID)
-					continue
-				}
-				pooScore, ok := data["poo_score"]
-				if !ok {
-					slog.Error("Invalid poo_score in event data", "eventID", event.ID)
-					continue
-				}
-
-				slog.Info("Processing rating created event", "bookID", bookID, "heartScore", heartScore, "pooScore", pooScore)
-				err = bookService.AddRatingToBook(bookID, heartScore, pooScore, ctx)
-				if err != nil {
-					slog.Error("Failed to add rating to book", "error", err, "bookID", bookID)
-					continue
-				}
+			default:
+				slog.Warn("Unknown event type", "type", event.Type, "eventID", event.ID)
 			}
 		}
 	}()
