@@ -90,15 +90,17 @@ func (s *RatingService) CreateRating(bookID string, userID string, heartScore fl
 		return err
 	}
 
+	eventPayload := RatingCreatedPayload{
+		HeartScore: rating.HeartScore,
+		PooScore:   rating.PooScore,
+	}
+
 	// queue background task to update book rating stats
 	err = s.eventService.PublishEvent(
 		ctx,
-		"rating.created",
+		EventTypeRatingCreated,
 		bookID,
-		map[string]float64{
-			"heart_score": rating.HeartScore,
-			"poo_score":   rating.PooScore,
-		},
+		eventPayload,
 	)
 
 	return nil
