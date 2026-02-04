@@ -103,6 +103,16 @@ func main() {
 						slog.Error("Failed to add rating to book", "error", err, "bookID", bookID)
 						return err
 					}
+
+					// Mark event as processed
+					err = eventService.MarkEventProcessed(ctx, tx, event.ID)
+					if err != nil {
+						slog.Error("Failed to mark event as processed", "error", err, "eventID", event.ID)
+						return err
+					}
+
+					slog.Info("Successfully processed rating created event", "eventID", event.ID)
+
 					return nil
 				})
 				if err != nil {

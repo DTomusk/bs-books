@@ -43,3 +43,7 @@ func (s *EventService) DequeueEvent(ctx context.Context) (*Event, error) {
 	}
 	return event, nil
 }
+
+func (s *EventService) MarkEventProcessed(ctx context.Context, db db.DBTX, eventID string) error {
+	return s.repo.markEventProcessed(ctx, db, eventID)
+}

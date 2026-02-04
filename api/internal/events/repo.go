@@ -93,3 +93,13 @@ func (r *eventRepo) dequeueEvent(ctx context.Context, db db.DBTX, maxAttempts in
 	}
 	return toEntity(&row), nil
 }
+
+func (r *eventRepo) markEventProcessed(ctx context.Context, db db.DBTX, eventID string) error {
+	query := `
+		UPDATE outbox_events
+		SET processed_at = $1
+		WHERE id = $2;
+	`
+	_, err := db.ExecContext(ctx, query, time.Now().UTC(), eventID)
+	return err
+}
