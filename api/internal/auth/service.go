@@ -42,6 +42,15 @@ func (s *AuthService) Register(ctx context.Context, username, email, password st
 		return ErrEmailAlreadyInUse
 	}
 
+	existing_user, err = s.userService.GetUserByUsername(username, ctx)
+	if err != nil {
+		return err
+	}
+
+	if existing_user != nil {
+		return ErrUsernameAlreadyInUse
+	}
+
 	password_hash, err := hashPassword(password)
 
 	if err != nil {

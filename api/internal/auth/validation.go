@@ -42,5 +42,11 @@ func validateUsername(username string) error {
 	if len(username) > 50 {
 		return ErrUsernameTooLong
 	}
+	// Validate that username only contains letters, numbers, underscores, or hyphens
+	for _, r := range username {
+		if !(r == '_' || r == '-' || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')) {
+			return ErrInvalidUsername
+		}
+	}
 	return nil
 }

@@ -64,6 +64,24 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 	})
 }
 
+func TestRegister_DuplicateUsername(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		userService := users.NewUserService(tx, users.NewUserRepo())
+		testService := NewAuthService(tx, userService, nil)
+		ctx := context.Background()
+		err := testService.Register(ctx, "testuser", "test@example.com", "password123")
+		require.NoError(t, err)
+
+		// Act
+		err = testService.Register(ctx, "testuser", "different@email.com", "anotherpassword")
+
+		// Assert
+		require.Error(t, err)
+		require.Equal(t, ErrUsernameAlreadyInUse, err)
+	})
+}
+
 func TestLogin_Success(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange

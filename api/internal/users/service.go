@@ -25,6 +25,10 @@ func (s *UserService) GetUserByEmail(email string, ctx context.Context) (*User, 
 	return s.userRepo.GetByEmail(email, ctx, s.db)
 }
 
+func (s *UserService) GetUserByUsername(username string, ctx context.Context) (*User, error) {
+	return s.userRepo.GetByUsername(username, ctx, s.db)
+}
+
 func (s *UserService) CreateUser(username, email, passwordHash string, ctx context.Context) error {
 	new_user := NewUser(email, passwordHash, username)
 	return s.userRepo.Create(new_user, ctx, s.db)

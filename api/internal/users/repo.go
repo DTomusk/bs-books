@@ -48,6 +48,24 @@ func (r *userRepo) GetByEmail(email string, ctx context.Context, db db.DBTX) (*U
 	return nil, nil
 }
 
+func (r *userRepo) GetByUsername(username string, ctx context.Context, db db.DBTX) (*User, error) {
+	var user *User
+	row, err := db.QueryContext(ctx, `SELECT id, username, email, password_hash FROM users WHERE username = $1`, username)
+	if err != nil {
+		return nil, err
+	}
+	defer row.Close()
+
+	if row.Next() {
+		user = &User{}
+		if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash); err != nil {
+			return nil, err
+		}
+		return user, nil
+	}
+	return nil, nil
+}
+
 func (r *userRepo) Create(user *User, ctx context.Context, db db.DBTX) error {
 	_, err := db.ExecContext(ctx, `INSERT INTO users (username, id, email, password_hash) VALUES ($1, $2, $3, $4)`, user.Username, user.ID, user.Email, user.PasswordHash)
 	return err
