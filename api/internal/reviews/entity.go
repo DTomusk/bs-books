@@ -1,12 +1,17 @@
 package reviews
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Review struct {
 	ID string
 	// Note: each review is associated with a rating
-	RatingID string
-	Text     string
+	RatingID  string
+	Text      string
+	CreatedAt time.Time
 }
 
 func newReview(ratingID, text string) (*Review, error) {
@@ -14,8 +19,9 @@ func newReview(ratingID, text string) (*Review, error) {
 		return nil, ErrEmptyReviewText
 	}
 	return &Review{
-		ID:       uuid.NewString(),
-		RatingID: ratingID,
-		Text:     text,
+		ID:        uuid.NewString(),
+		RatingID:  ratingID,
+		Text:      text,
+		CreatedAt: time.Now().UTC(),
 	}, nil
 }
