@@ -32,11 +32,14 @@ type BookSearchPage struct {
 }
 
 type BookDetails struct {
-	ID       string
-	Title    string
-	ImageURL string
-	Synopsis string
-	Authors  []AuthorSearchItem
+	ID              string
+	Title           string
+	ImageURL        string
+	Synopsis        string
+	HeartScore      float64
+	PooScore        float64
+	NumberOfRatings int
+	Authors         []AuthorSearchItem
 }
 
 func NewBookReader(db db.DBTX) *BookReader {
@@ -145,6 +148,9 @@ func (r *BookReader) GetBookByID(ctx context.Context, id string) (*BookDetails, 
 		b.title,
 		b.cover_img_url,
 		b.synopsis,
+		b.average_heart_score,
+		b.average_poo_score,
+		b.total_ratings,
 		a.id AS author_id,
 		a.name AS author_name
 	FROM books b
@@ -166,7 +172,9 @@ func (r *BookReader) GetBookByID(ctx context.Context, id string) (*BookDetails, 
 	for rows.Next() {
 		var bookID, bookTitle, authorID, authorName string
 		var bookImageURL, bookSynopsis sql.NullString
-		if err := rows.Scan(&bookID, &bookTitle, &bookImageURL, &bookSynopsis, &authorID, &authorName); err != nil {
+		var heartScore, pooScore float64
+		var numberOfRatings int
+		if err := rows.Scan(&bookID, &bookTitle, &bookImageURL, &bookSynopsis, &heartScore, &pooScore, &numberOfRatings, &authorID, &authorName); err != nil {
 			return nil, err
 		}
 		// If this is the first iteration, initialize the book details
@@ -175,6 +183,9 @@ func (r *BookReader) GetBookByID(ctx context.Context, id string) (*BookDetails, 
 			book.Title = bookTitle
 			book.ImageURL = nullString(bookImageURL)
 			book.Synopsis = nullString(bookSynopsis)
+			book.HeartScore = heartScore
+			book.PooScore = pooScore
+			book.NumberOfRatings = numberOfRatings
 			book.Authors = []AuthorSearchItem{}
 		}
 		book.Authors = append(book.Authors, AuthorSearchItem{
