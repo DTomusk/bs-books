@@ -2,6 +2,7 @@ package ratings
 
 import (
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/events"
 	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/testutil"
 	"context"
@@ -21,7 +22,9 @@ func TestServiceCreateRating(t *testing.T) {
 
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
 
-		testService := NewRatingService(txRunner, r, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+
+		testService := NewRatingService(txRunner, r, bookService, reviewService, eventService)
 		testutil.SeedAuthors(tx)
 		bookIDs := testutil.SeedBooks(tx)
 		userIDs := testutil.SeedUsers(tx)
@@ -50,7 +53,8 @@ func TestServiceCreateRating_BookNotFound(t *testing.T) {
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
-		testService := NewRatingService(txRunner, r, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		testService := NewRatingService(txRunner, r, bookService, reviewService, eventService)
 		testutil.SeedAuthors(tx)
 		testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
@@ -80,7 +84,8 @@ func TestServiceCreateRating_UserNotFound(t *testing.T) {
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
-		testService := NewRatingService(txRunner, r, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		testService := NewRatingService(txRunner, r, bookService, reviewService, eventService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		testutil.SeedUsers(tx)
@@ -108,7 +113,8 @@ func TestServiceCreateRating_RatingAlreadyExists(t *testing.T) {
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
-		testService := NewRatingService(txRunner, r, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		testService := NewRatingService(txRunner, r, bookService, reviewService, eventService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
@@ -149,7 +155,8 @@ func TestServiceCreateRating_SameBookDifferentUsers(t *testing.T) {
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
-		testService := NewRatingService(txRunner, r, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		testService := NewRatingService(txRunner, r, bookService, reviewService, eventService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
@@ -188,7 +195,8 @@ func TestServiceCreateRating_DifferentBooksSameUser(t *testing.T) {
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
-		testService := NewRatingService(txRunner, r, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		testService := NewRatingService(txRunner, r, bookService, reviewService, eventService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)
@@ -227,7 +235,8 @@ func TestServiceCreateRatingWithReview_Success(t *testing.T) {
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
-		testService := NewRatingService(txRunner, r, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		testService := NewRatingService(txRunner, r, bookService, reviewService, eventService)
 		testutil.SeedAuthors(tx)
 		bookIds := testutil.SeedBooks(tx)
 		userIds := testutil.SeedUsers(tx)

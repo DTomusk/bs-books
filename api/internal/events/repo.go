@@ -55,7 +55,7 @@ func (r *eventRepo) dequeueEvent(ctx context.Context, db db.DBTX, maxAttempts in
 	query := `
 	UPDATE outbox_events
 	SET 
-		attempts = attempts + 1
+		attempts = outbox_events.attempts + 1
 	FROM (
 		SELECT id, event_type, aggregate_id, payload, created_at, processed_at, attempts, last_error
 		FROM outbox_events

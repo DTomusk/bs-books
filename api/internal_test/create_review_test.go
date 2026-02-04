@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/auth"
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/delivery/response"
+	"bs-books-api/internal/events"
 	"bs-books-api/internal/ratings"
 	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/testutil"
@@ -62,7 +63,8 @@ func TestRegisterLoginPostRatingWithReview_Success(t *testing.T) {
 		bookService := books.NewBooksService(txRunner, bookRepo)
 		reviewRepo := reviews.NewReviewRepo()
 		reviewService := reviews.NewReviewService(reviewRepo)
-		ratingService := ratings.NewRatingService(txRunner, ratingRepo, bookService, reviewService, nil)
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		ratingService := ratings.NewRatingService(txRunner, ratingRepo, bookService, reviewService, eventService)
 		router := setupCreateReviewRouter(jwtService, authService, userHandler, ratingService)
 
 		// Seed authors and books
