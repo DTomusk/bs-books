@@ -84,9 +84,7 @@ func main() {
 	// DI for routes
 	txRunner := db.NewDBTxRunner(database)
 
-	eventRepo := events.NewEventRepo()
-	// TODO: make configurable
-	eventService := events.NewEventService(txRunner, eventRepo, 5)
+	eventService := events.NewEventService(txRunner, events.NewEventRepo(), cfg.EVENTS_MAX_RETRIES)
 
 	userService := users.NewUserService(database, users.NewUserRepo())
 	userHandler := users.NewUserHandler(userService)
@@ -96,7 +94,7 @@ func main() {
 	authHandler := auth.NewAuthHandler(authService)
 
 	// TODO: make thresholds configurable
-	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), 0.8)
+	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)
 	bookReader := queries.NewBookReader(database)
 	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 	bookExtractionService := extraction.NewBookExtractionService(database, extraction.NewGoogleBooksProvider(externalBooksHTTPClient, cfg.GOOGLE_BOOKS_API_KEY), authorService)

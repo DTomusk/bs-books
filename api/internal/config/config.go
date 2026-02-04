@@ -7,11 +7,14 @@ import (
 )
 
 type Config struct {
-	DB_URL                 string
-	JWT_SECRET_KEY         string
-	JWT_EXPIRATION_MINUTES int
-	ENV                    string
-	GOOGLE_BOOKS_API_KEY   string
+	DB_URL                      string
+	JWT_SECRET_KEY              string
+	JWT_EXPIRATION_MINUTES      int
+	ENV                         string
+	GOOGLE_BOOKS_API_KEY        string
+	EVENTS_MAX_RETRIES          int
+	EVENTS_RETRY_DELAY_SECONDS  int
+	AUTHOR_SIMILARITY_THRESHOLD float64
 }
 
 var (
@@ -47,11 +50,32 @@ func LoadConfig() (*Config, error) {
 
 	googleBooksAPIKey := os.Getenv("GOOGLE_BOOKS_API_KEY")
 
+	eventsMaxRetriesStr := os.Getenv("EVENTS_MAX_RETRIES")
+	eventsMaxRetries, err := strconv.Atoi(eventsMaxRetriesStr)
+	if err != nil || eventsMaxRetriesStr == "" {
+		return nil, fmt.Errorf("invalid or missing EVENTS_MAX_RETRIES value: %v", err)
+	}
+
+	eventsRetryDelaySecondsStr := os.Getenv("EVENTS_RETRY_DELAY_SECONDS")
+	eventsRetryDelaySeconds, err := strconv.Atoi(eventsRetryDelaySecondsStr)
+	if err != nil || eventsRetryDelaySecondsStr == "" {
+		return nil, fmt.Errorf("invalid or missing EVENTS_RETRY_DELAY_SECONDS value: %v", err)
+	}
+
+	authorSimilarityThresholdStr := os.Getenv("AUTHOR_SIMILARITY_THRESHOLD")
+	authorSimilarityThreshold, err := strconv.ParseFloat(authorSimilarityThresholdStr, 64)
+	if err != nil || authorSimilarityThresholdStr == "" {
+		return nil, fmt.Errorf("invalid or missing AUTHOR_SIMILARITY_THRESHOLD value: %v", err)
+	}
+
 	return &Config{
-		DB_URL:                 dbURL,
-		JWT_SECRET_KEY:         jwtSecretKey,
-		JWT_EXPIRATION_MINUTES: jwtExpirationMinutes,
-		ENV:                    env,
-		GOOGLE_BOOKS_API_KEY:   googleBooksAPIKey,
+		DB_URL:                      dbURL,
+		JWT_SECRET_KEY:              jwtSecretKey,
+		JWT_EXPIRATION_MINUTES:      jwtExpirationMinutes,
+		ENV:                         env,
+		GOOGLE_BOOKS_API_KEY:        googleBooksAPIKey,
+		EVENTS_MAX_RETRIES:          eventsMaxRetries,
+		EVENTS_RETRY_DELAY_SECONDS:  eventsRetryDelaySeconds,
+		AUTHOR_SIMILARITY_THRESHOLD: authorSimilarityThreshold,
 	}, nil
 }

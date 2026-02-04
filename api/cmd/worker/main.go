@@ -31,7 +31,6 @@ func main() {
 
 	slog.Info("Configuration loaded", "env", cfg.ENV)
 
-	// Connect to and ping database on startup
 	database, err := sql.Open("postgres", cfg.DB_URL)
 	if err != nil {
 		slog.Error("Failed to connect to database", "error", err)
@@ -51,7 +50,7 @@ func main() {
 	txRunner := db.NewDBTxRunner(database)
 
 	eventRepo := events.NewEventRepo()
-	eventService := events.NewEventService(txRunner, eventRepo, 5)
+	eventService := events.NewEventService(txRunner, eventRepo, cfg.EVENTS_MAX_RETRIES)
 
 	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
 
@@ -62,7 +61,7 @@ func main() {
 		slog.Info("Starting event processor...")
 		for {
 			select {
-			case <-time.After(5 * time.Second):
+			case <-time.After(time.Duration(cfg.EVENTS_RETRY_DELAY_SECONDS) * time.Second):
 			case <-ctx.Done():
 				slog.Info("Event processor shutting down")
 				return
@@ -77,8 +76,6 @@ func main() {
 
 			if event == nil {
 				slog.Info("No event to process")
-				// TODO: add to env
-				time.Sleep(5 * time.Second)
 				continue
 			}
 
