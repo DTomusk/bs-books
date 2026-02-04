@@ -72,12 +72,13 @@ func TestRegisterLoginPostRatingWithReview_Success(t *testing.T) {
 		bookIDs := testutil.SeedBooks(tx)
 
 		// 1. Register
-		body := []byte(`{
+		registerBody := []byte(`{
+		"username": "testuser",
 		"email": "peepee@poopoo.com",
 		"password": "securepassword"
 		}`)
 
-		registerReq := jsonRequest("POST", "/api/auth/register", body)
+		registerReq := jsonRequest("POST", "/api/auth/register", registerBody)
 		registerW := httptest.NewRecorder()
 
 		router.ServeHTTP(registerW, registerReq)
@@ -85,7 +86,11 @@ func TestRegisterLoginPostRatingWithReview_Success(t *testing.T) {
 		require.Equal(t, 201, registerW.Code)
 
 		// 2. Login
-		loginReq := jsonRequest("POST", "/api/auth/login", body)
+		loginBody := []byte(`{
+		"email": "peepee@poopoo.com",
+		"password": "securepassword"
+		}`)
+		loginReq := jsonRequest("POST", "/api/auth/login", loginBody)
 		loginW := httptest.NewRecorder()
 
 		router.ServeHTTP(loginW, loginReq)

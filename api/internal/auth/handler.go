@@ -35,7 +35,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	err := h.service.Register(ctx, req.Email, req.Password)
+	err := h.service.Register(ctx, req.Username, req.Email, req.Password)
 	if err != nil {
 		switch err {
 		case ErrInvalidEmail, ErrShortPassword, ErrLongPassword:

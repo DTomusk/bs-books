@@ -26,12 +26,11 @@ type ReviewItem struct {
 	HeartScore float64
 	PooScore   float64
 	Text       string
-	// TODO: we'll want to store a username as well once we have it
-	UserID    string
-	CreatedAt string
+	UserID     string
+	Username   string
+	CreatedAt  string
 }
 
-// TODO: add created at for ordering
 func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID string, page, pageSize, offset int) (*ReviewPage, error) {
 	const reviewsQuery = `
 	SELECT
@@ -40,9 +39,11 @@ func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID strin
 		rating.poo_score,
 		r.review,
 		rating.user_id,
+		u.username,
 		r.created_at
 	FROM reviews r
 	JOIN ratings rating ON r.rating_id = rating.id
+	JOIN users u on rating.user_id = u.id
 	WHERE rating.book_id = $1
 	ORDER BY r.created_at DESC, r.id DESC
 	LIMIT $2 OFFSET $3
@@ -58,7 +59,7 @@ func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID strin
 
 	for rows.Next() {
 		var review ReviewItem
-		err := rows.Scan(&review.ID, &review.HeartScore, &review.PooScore, &review.Text, &review.UserID, &review.CreatedAt)
+		err := rows.Scan(&review.ID, &review.HeartScore, &review.PooScore, &review.Text, &review.UserID, &review.Username, &review.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
