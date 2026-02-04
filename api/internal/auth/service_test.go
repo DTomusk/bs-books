@@ -6,6 +6,8 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRegister_Success(t *testing.T) {
@@ -17,12 +19,10 @@ func TestRegister_Success(t *testing.T) {
 		ctx := context.Background()
 
 		// Act
-		err := testService.Register(ctx, "test@example.com", "password123")
+		err := testService.Register(ctx, "testuser", "test@example.com", "password123")
 
 		// Assert
-		if err != nil {
-			t.Fatalf("expected no error, got %v", err)
-		}
+		require.NoError(t, err)
 	})
 }
 
@@ -30,13 +30,9 @@ func TestRegister_WeakPassword(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		testService := NewAuthService(tx, nil, nil)
 		ctx := context.Background()
-		err := testService.Register(ctx, "blah@mail.com", "123")
-		if err == nil {
-			t.Fatal("expected error for weak password, got nil")
-		}
-		if err != ErrShortPassword {
-			t.Fatalf("expected ErrShortPassword, got %v", err)
-		}
+		err := testService.Register(ctx, "blah", "blah@mail.com", "123")
+		require.Error(t, err)
+		require.Equal(t, ErrShortPassword, err)
 	})
 }
 
@@ -44,13 +40,9 @@ func TestRegister_InvalidEmail(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		testService := NewAuthService(tx, nil, nil)
 		ctx := context.Background()
-		err := testService.Register(ctx, "invalid-email", "strongpassword")
-		if err == nil {
-			t.Fatal("expected error for invalid email, got nil")
-		}
-		if err != ErrInvalidEmail {
-			t.Fatalf("expected ErrInvalidEmail, got %v", err)
-		}
+		err := testService.Register(ctx, "user", "invalid-email", "strongpassword")
+		require.Error(t, err)
+		require.Equal(t, ErrInvalidEmail, err)
 	})
 }
 
@@ -60,21 +52,15 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 		userService := users.NewUserService(tx, users.NewUserRepo())
 		testService := NewAuthService(tx, userService, nil)
 		ctx := context.Background()
-		err := testService.Register(ctx, "test@email.com", "password123")
-		if err != nil {
-			t.Fatalf("setup failed: %v", err)
-		}
+		err := testService.Register(ctx, "testuser", "test@email.com", "password123")
+		require.NoError(t, err)
 
 		// Act
-		err = testService.Register(ctx, "test@email.com", "anotherpassword")
+		err = testService.Register(ctx, "anotheruser", "test@email.com", "anotherpassword")
 
 		// Assert
-		if err == nil {
-			t.Fatal("expected error for duplicate email, got nil")
-		}
-		if err != ErrEmailAlreadyInUse {
-			t.Fatalf("expected ErrEmailAlreadyInUse, got %v", err)
-		}
+		require.Error(t, err)
+		require.Equal(t, ErrEmailAlreadyInUse, err)
 	})
 }
 
@@ -85,21 +71,15 @@ func TestLogin_Success(t *testing.T) {
 		jwtService := NewJWTService("test_secret_key", 15)
 		testService := NewAuthService(tx, userService, jwtService)
 		ctx := context.Background()
-		err := testService.Register(ctx, "test@example.com", "password123")
-		if err != nil {
-			t.Fatalf("setup failed: %v", err)
-		}
+		err := testService.Register(ctx, "testuser", "test@example.com", "password123")
+		require.NoError(t, err)
 
 		// Act
 		token, err := testService.Login(ctx, "test@example.com", "password123")
 
 		// Assert
-		if err != nil {
-			t.Fatalf("expected no error, got %v", err)
-		}
-		if token == "" {
-			t.Fatal("expected token, got empty string")
-		}
+		require.NoError(t, err)
+		require.NotEmpty(t, token)
 	})
 }
 
@@ -115,12 +95,8 @@ func TestLogin_WrongEmail(t *testing.T) {
 		_, err := testService.Login(ctx, "wrong@example.com", "password123")
 
 		// Assert
-		if err == nil {
-			t.Fatal("expected error for wrong email, got nil")
-		}
-		if err != ErrInvalidCredentials {
-			t.Fatalf("expected ErrInvalidCredentials, got %v", err)
-		}
+		require.Error(t, err)
+		require.Equal(t, ErrInvalidCredentials, err)
 	})
 }
 
@@ -131,20 +107,14 @@ func TestLogin_WrongPassword(t *testing.T) {
 		jwtService := NewJWTService("test_secret_key", 15)
 		testService := NewAuthService(tx, userService, jwtService)
 		ctx := context.Background()
-		err := testService.Register(ctx, "test@example.com", "password123")
-		if err != nil {
-			t.Fatalf("setup failed: %v", err)
-		}
+		err := testService.Register(ctx, "testuser", "test@example.com", "password123")
+		require.NoError(t, err)
 
 		// Act
 		_, err = testService.Login(ctx, "test@example.com", "wrongpassword")
 
 		// Assert
-		if err == nil {
-			t.Fatal("expected error for wrong password, got nil")
-		}
-		if err != ErrInvalidCredentials {
-			t.Fatalf("expected ErrInvalidCredentials, got %v", err)
-		}
+		require.Error(t, err)
+		require.Equal(t, ErrInvalidCredentials, err)
 	})
 }

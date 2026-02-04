@@ -14,7 +14,7 @@ func NewUserRepo() *userRepo {
 
 func (r *userRepo) GetByID(id string, ctx context.Context, db db.DBTX) (*User, error) {
 	var user *User
-	row, err := db.QueryContext(ctx, `SELECT id, email, password_hash FROM users WHERE id = $1`, id)
+	row, err := db.QueryContext(ctx, `SELECT id, username, email, password_hash FROM users WHERE id = $1`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (r *userRepo) GetByID(id string, ctx context.Context, db db.DBTX) (*User, e
 
 	if row.Next() {
 		user = &User{}
-		if err := row.Scan(&user.ID, &user.Email, &user.PasswordHash); err != nil {
+		if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash); err != nil {
 			return nil, err
 		}
 		return user, nil
@@ -32,7 +32,7 @@ func (r *userRepo) GetByID(id string, ctx context.Context, db db.DBTX) (*User, e
 
 func (r *userRepo) GetByEmail(email string, ctx context.Context, db db.DBTX) (*User, error) {
 	var user *User
-	row, err := db.QueryContext(ctx, `SELECT id, email, password_hash FROM users WHERE email = $1`, email)
+	row, err := db.QueryContext(ctx, `SELECT id, username, email, password_hash FROM users WHERE email = $1`, email)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (r *userRepo) GetByEmail(email string, ctx context.Context, db db.DBTX) (*U
 
 	if row.Next() {
 		user = &User{}
-		if err := row.Scan(&user.ID, &user.Email, &user.PasswordHash); err != nil {
+		if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash); err != nil {
 			return nil, err
 		}
 		return user, nil
@@ -49,6 +49,6 @@ func (r *userRepo) GetByEmail(email string, ctx context.Context, db db.DBTX) (*U
 }
 
 func (r *userRepo) Create(user *User, ctx context.Context, db db.DBTX) error {
-	_, err := db.ExecContext(ctx, `INSERT INTO users (id, email, password_hash) VALUES ($1, $2, $3)`, user.ID, user.Email, user.PasswordHash)
+	_, err := db.ExecContext(ctx, `INSERT INTO users (username, id, email, password_hash) VALUES ($1, $2, $3, $4)`, user.Username, user.ID, user.Email, user.PasswordHash)
 	return err
 }

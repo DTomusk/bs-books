@@ -34,3 +34,13 @@ func validateEmail(email string) error {
 
 	return nil
 }
+
+func validateUsername(username string) error {
+	if len(username) < 3 {
+		return ErrUsernameTooShort
+	}
+	if len(username) > 50 {
+		return ErrUsernameTooLong
+	}
+	return nil
+}

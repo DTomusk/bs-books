@@ -50,12 +50,13 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		router := setupAuthRouter(jwtService, authService, userHandler)
 
 		// 1. Register
-		body := []byte(`{
+		registerBody := []byte(`{
+		"username": "testuser",
 		"email": "test@example.com",
 		"password": "securepassword"
 		}`)
 
-		registerReq := jsonRequest("POST", "/api/auth/register", body)
+		registerReq := jsonRequest("POST", "/api/auth/register", registerBody)
 		registerW := httptest.NewRecorder()
 
 		router.ServeHTTP(registerW, registerReq)
@@ -63,7 +64,11 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		require.Equal(t, 201, registerW.Code)
 
 		// 2. Login
-		loginReq := jsonRequest("POST", "/api/auth/login", body)
+		loginBody := []byte(`{
+		"email": "test@example.com",	
+		"password": "securepassword"
+		}`)
+		loginReq := jsonRequest("POST", "/api/auth/login", loginBody)
 		loginW := httptest.NewRecorder()
 
 		router.ServeHTTP(loginW, loginReq)

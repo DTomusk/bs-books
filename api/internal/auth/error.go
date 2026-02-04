@@ -11,4 +11,6 @@ var (
 	ErrInvalidToken       = fmt.Errorf("invalid token")
 	ErrMissingAuthHeader  = fmt.Errorf("missing authorization header")
 	ErrInvalidAuthHeader  = fmt.Errorf("invalid authorization header format")
+	ErrUsernameTooShort   = fmt.Errorf("username must be at least 3 characters long")
+	ErrUsernameTooLong    = fmt.Errorf("username must not exceed 50 characters")
 )
