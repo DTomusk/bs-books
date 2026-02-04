@@ -76,6 +76,7 @@ func main() {
 
 			if event == nil {
 				slog.Info("No event to process")
+				time.Sleep(time.Duration(cfg.EVENTS_RETRY_DELAY_SECONDS) * time.Second)
 				continue
 			}
 
