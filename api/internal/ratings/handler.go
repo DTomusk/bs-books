@@ -20,11 +20,19 @@ func NewRatingHandler(service *RatingService) *RatingHandler {
 // @Tags ratings
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Param rating body RatingRequest true "Rating to create"
 // @Success 201
 // @Router /ratings [post]
 func (h *RatingHandler) CreateRating(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(401, response.ErrUnauthorized)
+		return
+	}
+
 	var req RatingRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -32,7 +40,7 @@ func (h *RatingHandler) CreateRating(c *gin.Context) {
 		return
 	}
 
-	_, err := h.service.CreateRating(req.BookID, req.HeartScore, req.PooScore, ctx)
+	err := h.service.CreateRating(req.BookID, userID.(string), req.HeartScore, req.PooScore, req.Review, ctx)
 
 	switch err {
 	case ErrNegativeScore, ErrLargeScore:

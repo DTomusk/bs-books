@@ -50,6 +50,8 @@ definitions:
         type: number
       poo_score:
         type: number
+      review:
+        type: string
     type: object
   response.Error:
     properties:
@@ -64,6 +66,39 @@ definitions:
       error:
         $ref: '#/definitions/response.Error'
       meta: {}
+    type: object
+  response.PageMeta:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_items:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  reviews.ReviewListingItem:
+    properties:
+      heart_score:
+        type: number
+      id:
+        type: string
+      poo_score:
+        type: number
+      text:
+        type: string
+      user_id:
+        type: string
+    type: object
+  reviews.ReviewListingResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/reviews.ReviewListingItem'
+        type: array
+      meta:
+        $ref: '#/definitions/response.PageMeta'
     type: object
   search.AuthorSearchItem:
     properties:
@@ -94,18 +129,7 @@ definitions:
           $ref: '#/definitions/search.BookSearchItem'
         type: array
       meta:
-        $ref: '#/definitions/search.PageMeta'
-    type: object
-  search.PageMeta:
-    properties:
-      page:
-        type: integer
-      size:
-        type: integer
-      total:
-        type: integer
-      total_pages:
-        type: integer
+        $ref: '#/definitions/response.PageMeta'
     type: object
   users.GetMeResponse:
     properties:
@@ -194,6 +218,45 @@ paths:
       summary: Get Book by ID
       tags:
       - Books
+  /books/{id}/reviews:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all reviews associated with a specific book
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/reviews.ReviewListingResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get reviews for a book
+      tags:
+      - reviews
   /books/search:
     get:
       consumes:
@@ -250,6 +313,8 @@ paths:
       responses:
         "201":
           description: Created
+      security:
+      - BearerAuth: []
       summary: Create a new rating
       tags:
       - ratings

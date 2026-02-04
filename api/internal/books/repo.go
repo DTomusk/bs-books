@@ -83,3 +83,46 @@ func (r *booksRepo) checkSimilarBookExists(normalisedTitle string, authorIDs []s
 
 	return exists == 1, nil
 }
+
+func (r *booksRepo) getBookExists(bookID string, ctx context.Context, db db.DBTX) (bool, error) {
+	var exists int
+	err := db.QueryRowContext(ctx, `SELECT 1 FROM books WHERE id = $1`, bookID).Scan(&exists)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return exists == 1, nil
+}
+
+func (r *booksRepo) getBookRatingStats(bookID string, ctx context.Context, db db.DBTX) (float64, float64, int, error) {
+	var averageHeartScore float64
+	var averagePooScore float64
+	var totalRatings int
+
+	err := db.QueryRowContext(
+		ctx,
+		`SELECT average_heart_score, average_poo_score, total_ratings FROM books WHERE id = $1`,
+		bookID,
+	).Scan(&averageHeartScore, &averagePooScore, &totalRatings)
+
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return averageHeartScore, averagePooScore, totalRatings, nil
+}
+
+func (r *booksRepo) updateBookRatingStats(bookID string, averageHeartScore float64, averagePooScore float64, totalRatings int, ctx context.Context, db db.DBTX) error {
+	_, err := db.ExecContext(
+		ctx,
+		`UPDATE books SET average_heart_score = $1, average_poo_score = $2, total_ratings = $3 WHERE id = $4`,
+		averageHeartScore,
+		averagePooScore,
+		totalRatings,
+		bookID,
+	)
+	return err
+}

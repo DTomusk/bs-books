@@ -1,8 +1,10 @@
 package search
 
+import "bs-books-api/internal/delivery/response"
+
 type BookSearchResponse struct {
-	Data []BookSearchItem `json:"data"`
-	Meta PageMeta         `json:"meta"`
+	Data []BookSearchItem  `json:"data"`
+	Meta response.PageMeta `json:"meta"`
 }
 
 type BookSearchItem struct {
@@ -16,11 +18,4 @@ type BookSearchItem struct {
 type AuthorSearchItem struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-}
-
-type PageMeta struct {
-	Total      int `json:"total"`
-	TotalPages int `json:"total_pages"`
-	Page       int `json:"page"`
-	Size       int `json:"size"`
 }

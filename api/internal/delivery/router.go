@@ -6,6 +6,7 @@ import (
 	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/users"
 	"net/http"
 
@@ -19,6 +20,7 @@ func NewRouter(
 	bookSearchHandler *search.BookSearchHandler,
 	ratingHandler *ratings.RatingHandler,
 	userHandler *users.UserHandler,
+	reviewHandler *reviews.ReviewHandler,
 	jwtService *auth.JWTService,
 	bookHandler *books.BookHandler,
 ) *gin.Engine {
@@ -50,11 +52,20 @@ func NewRouter(
 		{
 			searchRoutes.GET("", bookSearchHandler.SearchBooks)
 		}
+
+		reviewRoutes := booksRoutes.Group("/:id/reviews")
+		{
+			reviewRoutes.GET("", reviewHandler.GetReviewsByBookID)
+		}
 	}
 
 	ratingsRoutes := api.Group("/ratings")
 	{
-		ratingsRoutes.POST("", ratingHandler.CreateRating)
+		protected := ratingsRoutes.Group("")
+		protected.Use(auth.AuthMiddleware(jwtService))
+		{
+			protected.POST("", ratingHandler.CreateRating)
+		}
 	}
 
 	usersRoutes := api.Group("/users")

@@ -7,10 +7,13 @@ import (
 	"bs-books-api/internal/books/extraction"
 	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
+	"bs-books-api/internal/db"
 	"bs-books-api/internal/delivery"
+	"bs-books-api/internal/events"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/users"
 	"context"
 	"database/sql"
@@ -49,13 +52,13 @@ func main() {
 	slog.Info("Configuration loaded", "env", cfg.ENV)
 
 	// Connect to and ping database on startup
-	db, err := sql.Open("postgres", cfg.DB_URL)
+	database, err := sql.Open("postgres", cfg.DB_URL)
 	if err != nil {
 		slog.Error("Failed to connect to database", "error", err)
 		return
 	}
 
-	if err := db.Ping(); err != nil {
+	if err := database.Ping(); err != nil {
 		slog.Error("Failed to ping database", "error", err)
 		return
 	}
@@ -79,23 +82,30 @@ func main() {
 	defer stop()
 
 	// DI for routes
-	userService := users.NewUserService(db, users.NewUserRepo())
+	txRunner := db.NewDBTxRunner(database)
+
+	eventService := events.NewEventService(txRunner, events.NewEventRepo(), cfg.EVENTS_MAX_RETRIES)
+
+	userService := users.NewUserService(database, users.NewUserRepo())
 	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
-	authService := auth.NewAuthService(db, userService, jwtService)
+	authService := auth.NewAuthService(database, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
-	authorService := authors.NewAuthorsService(db, authors.NewAuthorsRepo(), 0.8)
-
-	bookReader := queries.NewBookReader(db)
-	bookService := books.NewBooksService(db, books.NewBooksRepo())
-	bookExtractionService := extraction.NewBookExtractionService(db, extraction.NewGoogleBooksProvider(externalBooksHTTPClient, cfg.GOOGLE_BOOKS_API_KEY), authorService)
-	bookSearchService := search.NewBookSearchService(db, bookReader, bookService, search.NewBookSearchRepo(), bookExtractionService)
+	// TODO: make thresholds configurable
+	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)
+	bookReader := queries.NewBookReader(database)
+	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
+	bookExtractionService := extraction.NewBookExtractionService(database, extraction.NewGoogleBooksProvider(externalBooksHTTPClient, cfg.GOOGLE_BOOKS_API_KEY), authorService)
+	bookSearchService := search.NewBookSearchService(database, bookReader, bookService, search.NewBookSearchRepo(), bookExtractionService)
 	searchHandler := search.NewSearchHandler(bookSearchService)
 	bookHandler := books.NewBookHandler(bookReader)
 
-	ratingService := ratings.NewRatingService(db, ratings.NewRatingRepo())
+	reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+	reviewReader := queries.NewReviewReader(database)
+	reviewHandler := reviews.NewReviewHandler(reviewReader)
+	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
 	r := delivery.NewRouter(
@@ -103,6 +113,7 @@ func main() {
 		searchHandler,
 		ratingHandler,
 		userHandler,
+		reviewHandler,
 		jwtService,
 		bookHandler,
 	)

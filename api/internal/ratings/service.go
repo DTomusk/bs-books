@@ -1,30 +1,107 @@
 package ratings
 
 import (
+	"bs-books-api/internal/books"
 	"bs-books-api/internal/db"
+	"bs-books-api/internal/events"
+	"bs-books-api/internal/logging"
+	"bs-books-api/internal/reviews"
 	"context"
+	"database/sql"
 )
 
 type RatingService struct {
-	db   db.DBTX
-	repo *ratingRepo
+	txRunner      db.TxRunner
+	repo          *ratingRepo
+	bookService   *books.BooksService
+	reviewService *reviews.ReviewService
+	eventService  *events.EventService
 }
 
-func NewRatingService(db db.DBTX, r *ratingRepo) *RatingService {
+func NewRatingService(
+	txRunner db.TxRunner,
+	r *ratingRepo,
+	bs *books.BooksService,
+	rs *reviews.ReviewService,
+	es *events.EventService,
+) *RatingService {
 	return &RatingService{
-		db:   db,
-		repo: r,
+		txRunner:      txRunner,
+		repo:          r,
+		bookService:   bs,
+		reviewService: rs,
+		eventService:  es,
 	}
 }
 
-func (s *RatingService) CreateRating(bookID string, heartScore float64, pooScore float64, ctx context.Context) (*Rating, error) {
-	rating, err := newRating(bookID, heartScore, pooScore)
+func (s *RatingService) CreateRating(bookID string, userID string, heartScore float64, pooScore float64, review string, ctx context.Context) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("Creating rating", "bookID", bookID, "userID", userID, "heartScore", heartScore, "pooScore", pooScore)
+	rating, err := newRating(bookID, userID, heartScore, pooScore)
 
 	if err != nil {
-		return nil, err
+		logger.Error("Failed to create rating object", "error", err)
+		return err
 	}
 
-	err = s.repo.create(rating, ctx, s.db)
+	// ensure book exists
+	exists, err := s.bookService.BookExists(ctx, bookID)
 
-	return rating, err
+	// TODO: consider if we want to separate errors
+	if err != nil || !exists {
+		logger.Error("Book not found or error checking book existence", "error", err, "exists", exists)
+		return ErrBookNotFound
+	}
+
+	// Ensure user hasn't rated this book before
+	existingRating, err := s.repo.getRatingByUserAndBook(userID, bookID, ctx, s.txRunner.DB())
+	if err != nil {
+		logger.Error("Failed to check for existing rating", "error", err)
+		return err
+	}
+
+	if existingRating != nil {
+		logger.Info("User has already rated this book", "userID", userID, "bookID", bookID)
+		return ErrRatingAlreadyExists
+	}
+
+	err = s.txRunner.WithTx(ctx, func(tx *sql.Tx) error {
+		err = s.repo.create(rating, ctx, tx)
+		if err != nil {
+			logger.Error("Failed to create rating", "error", err)
+			return err
+		}
+
+		if review == "" {
+			return nil
+		}
+
+		err = s.reviewService.CreateReview(rating.ID, review, ctx, tx)
+
+		if err != nil {
+			logger.Error("Failed to create review", "error", err)
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	eventPayload := RatingCreatedPayload{
+		HeartScore: rating.HeartScore,
+		PooScore:   rating.PooScore,
+	}
+
+	// queue background task to update book rating stats
+	err = s.eventService.PublishEvent(
+		ctx,
+		EventTypeRatingCreated,
+		bookID,
+		eventPayload,
+	)
+
+	return nil
 }

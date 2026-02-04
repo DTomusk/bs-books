@@ -3,6 +3,8 @@ package ratings
 import "fmt"
 
 var (
-	ErrNegativeScore = fmt.Errorf("scores must be non-negative")
-	ErrLargeScore    = fmt.Errorf("scores must not exceed 5.0")
+	ErrNegativeScore       = fmt.Errorf("scores must be non-negative")
+	ErrLargeScore          = fmt.Errorf("scores must not exceed 5.0")
+	ErrBookNotFound        = fmt.Errorf("book not found")
+	ErrRatingAlreadyExists = fmt.Errorf("rating already exists for this user and book")
 )
