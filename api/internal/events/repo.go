@@ -52,13 +52,29 @@ func (r *eventRepo) insertEvent(ctx context.Context, db db.DBTX, event *Event) e
 
 func (r *eventRepo) dequeueEvent(ctx context.Context, db db.DBTX, maxAttempts int) (*Event, error) {
 	var row OutboxEventRow
-	query := `SELECT id, event_type, aggregate_id, payload, created_at, processed_at, attempts, last_error
-			  FROM outbox_events
-			  WHERE processed_at IS NULL
-			  AND attempts < $1
-			  ORDER BY created_at
-			  LIMIT 1
-			  FOR UPDATE SKIP LOCKED`
+	query := `
+	UPDATE outbox_events
+	SET 
+		attempts = attempts + 1
+	FROM (
+		SELECT id, event_type, aggregate_id, payload, created_at, processed_at, attempts, last_error
+		FROM outbox_events
+		WHERE processed_at IS NULL
+		AND attempts < $1
+		ORDER BY created_at
+		FOR UPDATE SKIP LOCKED
+		LIMIT 1
+	) event
+	WHERE outbox_events.id = event.id
+	RETURNING 
+		outbox_events.id, 
+		outbox_events.event_type, 
+		outbox_events.aggregate_id, 
+		outbox_events.payload, 
+		outbox_events.created_at, 
+		outbox_events.processed_at, 
+		outbox_events.attempts, 
+		outbox_events.last_error;`
 	err := db.QueryRowContext(ctx, query, maxAttempts).Scan(
 		&row.ID,
 		&row.EventType,
