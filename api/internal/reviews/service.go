@@ -7,11 +7,13 @@ import (
 
 type ReviewService struct {
 	repo *ReviewRepo
+	db   db.DBTX
 }
 
-func NewReviewService(repo *ReviewRepo) *ReviewService {
+func NewReviewService(repo *ReviewRepo, db db.DBTX) *ReviewService {
 	return &ReviewService{
 		repo: repo,
+		db:   db,
 	}
 }
 
@@ -28,4 +30,12 @@ func (s *ReviewService) CreateReview(ratingID, reviewText string, ctx context.Co
 		return err
 	}
 	return nil
+}
+
+func (s *ReviewService) GetReviewByID(ctx context.Context, reviewID string) (bool, error) {
+	review, err := s.repo.getByID(ctx, s.db, reviewID)
+	if err != nil {
+		return false, err
+	}
+	return review != nil, nil
 }

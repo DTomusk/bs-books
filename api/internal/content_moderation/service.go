@@ -25,7 +25,7 @@ func (s *ContentModerationService) ReportContent(ctx context.Context, contentID,
 	switch contentType {
 	case Review:
 		// call review service to check content existence
-		exists, err := s.reviewService.GetReviewByID(contentID)
+		exists, err := s.reviewService.GetReviewByID(ctx, contentID)
 		if err != nil || !exists {
 			return ErrContentElementDoesntExist
 		}
