@@ -3,6 +3,7 @@ package main
 import (
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/config"
+	"bs-books-api/internal/content_moderation"
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/events"
 	"bs-books-api/internal/logging"
@@ -115,6 +116,18 @@ func main() {
 				})
 				if err != nil {
 					slog.Error("Failed to process rating created event", "error", err, "eventID", event.ID)
+					continue
+				}
+			case content_moderation.EventReviewReported:
+				err = txRunner.WithTx(ctx, func(tx *sql.Tx) error {
+					reviewID := event.AggregateID
+
+					slog.Info("Processing review reported event", "reviewID", reviewID)
+					// Call review service to increment reports on the specified review and change the visiblity if relevant
+					return nil
+				})
+				if err != nil {
+					slog.Error("Failed to process review reported event", "error", err, "eventID", event.ID)
 					continue
 				}
 			default:

@@ -13,7 +13,6 @@ func NewContentModerationRepo() *ContentModerationRepo {
 }
 
 // TODO: consider adding sql row shape and mapping for entity
-
 func (r *ContentModerationRepo) GetReportByUserByContentID(ctx context.Context, db db.DBTX, userID, contentID string) (*ContentModerationReport, error) {
 	var contentReport ContentModerationReport
 	const query = `
@@ -49,4 +48,13 @@ func (r *ContentModerationRepo) GetReportByUserByContentID(ctx context.Context, 
 		return nil, err
 	}
 	return &contentReport, nil
+}
+
+func (r *ContentModerationRepo) CreateReport(ctx context.Context, db db.DBTX, userID, contentID, contentType, reason string) error {
+	const query = `
+	INSERT INTO moderation_reports (reporter_id, content_id, content_type, reason, created_at, status) VALUES ($1, $2, $3, $4, NOW(), 'pending_review')
+	`
+
+	_, err := db.ExecContext(ctx, query, userID, contentID, contentType, reason)
+	return err
 }

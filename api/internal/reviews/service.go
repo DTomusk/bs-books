@@ -32,7 +32,7 @@ func (s *ReviewService) CreateReview(ratingID, reviewText string, ctx context.Co
 	return nil
 }
 
-func (s *ReviewService) GetReviewByID(ctx context.Context, reviewID string) (bool, error) {
+func (s *ReviewService) GetReviewExists(ctx context.Context, reviewID string) (bool, error) {
 	review, err := s.repo.getByID(ctx, s.db, reviewID)
 	if err != nil {
 		return false, err
