@@ -45,6 +45,7 @@ func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID strin
 	JOIN ratings rating ON r.rating_id = rating.id
 	JOIN users u on rating.user_id = u.id
 	WHERE rating.book_id = $1
+	AND r.moderation_status = 'visible'
 	ORDER BY r.created_at DESC, r.id DESC
 	LIMIT $2 OFFSET $3
 	`
@@ -71,6 +72,7 @@ func (r *ReviewReader) GetReviewsByBookIDQuery(ctx context.Context, bookID strin
 	FROM reviews r
 	JOIN ratings rating ON r.rating_id = rating.id
 	WHERE rating.book_id = $1
+	AND r.moderation_status = 'visible'
 	`
 
 	var total int
