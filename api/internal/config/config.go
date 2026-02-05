@@ -15,6 +15,7 @@ type Config struct {
 	EVENTS_MAX_RETRIES          int
 	EVENTS_RETRY_DELAY_SECONDS  int
 	AUTHOR_SIMILARITY_THRESHOLD float64
+	REVIEW_VISIBILITY_THRESHOLD int
 }
 
 var (
@@ -68,6 +69,9 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("invalid or missing AUTHOR_SIMILARITY_THRESHOLD value: %v", err)
 	}
 
+	reviewVisibilityThresholdStr := os.Getenv("REVIEW_VISIBILITY_THRESHOLD")
+	reviewVisibilityThreshold, err := strconv.Atoi(reviewVisibilityThresholdStr)
+
 	return &Config{
 		DB_URL:                      dbURL,
 		JWT_SECRET_KEY:              jwtSecretKey,
@@ -77,5 +81,6 @@ func LoadConfig() (*Config, error) {
 		EVENTS_MAX_RETRIES:          eventsMaxRetries,
 		EVENTS_RETRY_DELAY_SECONDS:  eventsRetryDelaySeconds,
 		AUTHOR_SIMILARITY_THRESHOLD: authorSimilarityThreshold,
+		REVIEW_VISIBILITY_THRESHOLD: reviewVisibilityThreshold,
 	}, nil
 }

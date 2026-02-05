@@ -8,6 +8,7 @@ import (
 	"bs-books-api/internal/events"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/reviews"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -54,6 +55,8 @@ func main() {
 	eventService := events.NewEventService(txRunner, eventRepo, cfg.EVENTS_MAX_RETRIES)
 
 	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
+
+	reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), database, cfg.REVIEW_VISIBILITY_THRESHOLD)
 
 	quitCh := make(chan os.Signal, 1)
 	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
@@ -124,6 +127,12 @@ func main() {
 
 					slog.Info("Processing review reported event", "reviewID", reviewID)
 					// Call review service to increment reports on the specified review and change the visiblity if relevant
+					err := reviewService.HandleReviewReported(ctx, tx, reviewID)
+					if err != nil {
+						slog.Error("Failed to handle review reported event", "error", err, "reviewID", reviewID)
+						return err
+					}
+
 					return nil
 				})
 				if err != nil {

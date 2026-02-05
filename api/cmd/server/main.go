@@ -102,7 +102,7 @@ func main() {
 	searchHandler := search.NewSearchHandler(bookSearchService)
 	bookHandler := books.NewBookHandler(bookReader)
 
-	reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), database)
+	reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), database, cfg.REVIEW_VISIBILITY_THRESHOLD)
 	reviewReader := queries.NewReviewReader(database)
 	reviewHandler := reviews.NewReviewHandler(reviewReader)
 	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)

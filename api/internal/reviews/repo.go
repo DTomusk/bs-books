@@ -37,3 +37,20 @@ func (r *ReviewRepo) getByID(ctx context.Context, db db.DBTX, reviewID string) (
 	}
 	return &review, nil
 }
+
+func (r *ReviewRepo) incrementReportCount(ctx context.Context, db db.DBTX, reviewID string, visibilityThreshold int) error {
+	query := `
+		UPDATE reviews
+		SET report_count = report_count + 1,
+		    visibility_status = CASE
+		        WHEN report_count + 1 >= $2 THEN 'hidden'
+		        ELSE visibility_status
+		    END
+		WHERE id = $1
+	`
+	_, err := db.ExecContext(ctx, query, reviewID, visibilityThreshold)
+	if err != nil {
+		return err
+	}
+	return nil
+}

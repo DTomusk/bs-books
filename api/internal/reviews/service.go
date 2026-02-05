@@ -6,14 +6,16 @@ import (
 )
 
 type ReviewService struct {
-	repo *ReviewRepo
-	db   db.DBTX
+	repo                     *ReviewRepo
+	db                       db.DBTX
+	reviewVisiblityThreshold int
 }
 
-func NewReviewService(repo *ReviewRepo, db db.DBTX) *ReviewService {
+func NewReviewService(repo *ReviewRepo, db db.DBTX, reviewVisiblityThreshold int) *ReviewService {
 	return &ReviewService{
-		repo: repo,
-		db:   db,
+		repo:                     repo,
+		db:                       db,
+		reviewVisiblityThreshold: reviewVisiblityThreshold,
 	}
 }
 
@@ -38,4 +40,19 @@ func (s *ReviewService) GetReviewExists(ctx context.Context, reviewID string) (b
 		return false, err
 	}
 	return review != nil, nil
+}
+
+func (s *ReviewService) HandleReviewReported(ctx context.Context, tx db.DBTX, reviewID string) error {
+	review, err := s.repo.getByID(ctx, tx, reviewID)
+	if err != nil {
+		return err
+	}
+	if review == nil {
+		return nil // If review doesn't exist, we can ignore the event
+	}
+	err = s.repo.incrementReportCount(ctx, tx, reviewID, s.reviewVisiblityThreshold)
+	if err != nil {
+		return err
+	}
+	return nil
 }
