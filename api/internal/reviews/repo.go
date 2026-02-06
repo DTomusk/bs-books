@@ -42,9 +42,9 @@ func (r *ReviewRepo) incrementReportCount(ctx context.Context, db db.DBTX, revie
 	query := `
 		UPDATE reviews
 		SET report_count = report_count + 1,
-		    visibility_status = CASE
+		    moderation_status = CASE
 		        WHEN report_count + 1 >= $2 THEN 'hidden'
-		        ELSE visibility_status
+		        ELSE moderation_status
 		    END
 		WHERE id = $1
 	`

@@ -48,7 +48,7 @@ func (s *ReviewService) HandleReviewReported(ctx context.Context, tx db.DBTX, re
 		return err
 	}
 	if review == nil {
-		return nil // If review doesn't exist, we can ignore the event
+		return nil
 	}
 	err = s.repo.incrementReportCount(ctx, tx, reviewID, s.reviewVisiblityThreshold)
 	if err != nil {

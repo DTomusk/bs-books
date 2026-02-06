@@ -68,11 +68,48 @@ func TestReportReview_Success(t *testing.T) {
 		// Assert
 		require.Nil(t, err)
 
+		// Dequeue event to check it was raised successfully
 		event, err := eventService.DequeueEvent(ctx)
-
 		require.Nil(t, err)
 		require.NotNil(t, event)
 		require.Equal(t, EventReviewReported, event.Type)
 		require.Equal(t, ids[1], event.AggregateID)
+	})
+}
+
+func TestReportReview_DuplicateReport_Errors(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		// DI
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, reviewService)
+
+		// Seed data
+		testutil.SeedAuthors(tx)
+		bookIDs := testutil.SeedBooks(tx)
+		userIDs := testutil.SeedUsers(tx)
+		ids := testutil.SeedRatingsAndReviews(tx, bookIDs[0], userIDs[0], 4.5, 1.0)
+
+		// Act
+		err := service.ReportContent(ctx, ids[1], Review, "Inappropriate content", userIDs[0])
+
+		// Assert
+		require.Nil(t, err)
+
+		// Dequeue event to check it was raised successfully
+		event, err := eventService.DequeueEvent(ctx)
+		require.Nil(t, err)
+		require.NotNil(t, event)
+		require.Equal(t, EventReviewReported, event.Type)
+		require.Equal(t, ids[1], event.AggregateID)
+
+		// Act 2 - attempt to report same content again by same user
+		err = service.ReportContent(ctx, ids[1], Review, "Inappropriate content", userIDs[0])
+		require.NotNil(t, err)
+		require.Equal(t, ErrAlreadyReported, err)
 	})
 }
