@@ -7,6 +7,7 @@ import (
 	"bs-books-api/internal/books/extraction"
 	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
+	"bs-books-api/internal/content_moderation"
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/delivery"
 	"bs-books-api/internal/events"
@@ -93,7 +94,6 @@ func main() {
 	authService := auth.NewAuthService(database, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
-	// TODO: make thresholds configurable
 	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)
 	bookReader := queries.NewBookReader(database)
 	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
@@ -102,11 +102,13 @@ func main() {
 	searchHandler := search.NewSearchHandler(bookSearchService)
 	bookHandler := books.NewBookHandler(bookReader)
 
-	reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+	reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), database, cfg.REVIEW_VISIBILITY_THRESHOLD)
 	reviewReader := queries.NewReviewReader(database)
 	reviewHandler := reviews.NewReviewHandler(reviewReader)
 	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
+
+	contentModerationHandler := content_moderation.NewContentModerationHandler(content_moderation.NewContentModerationService(database, content_moderation.NewContentModerationRepo(), eventService, reviewService, userService))
 
 	r := delivery.NewRouter(
 		authHandler,
@@ -116,6 +118,7 @@ func main() {
 		reviewHandler,
 		jwtService,
 		bookHandler,
+		contentModerationHandler,
 	)
 
 	srv := &http.Server{

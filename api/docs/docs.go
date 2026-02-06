@@ -242,6 +242,60 @@ const docTemplate = `{
                 }
             }
         },
+        "/moderation/report": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Report a review or user for inappropriate content or behavior",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content Moderation"
+                ],
+                "summary": "Report inappropriate content",
+                "parameters": [
+                    {
+                        "description": "Report content request",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/content_moderation.ReportContentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/ratings": {
             "post": {
                 "security": [
@@ -384,6 +438,28 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "content_moderation.ReportContentRequest": {
+            "type": "object",
+            "required": [
+                "content_id",
+                "content_type",
+                "reason"
+            ],
+            "properties": {
+                "content_id": {
+                    "type": "string"
+                },
+                "content_type": {
+                    "type": "string",
+                    "enum": [
+                        "review"
+                    ]
+                },
+                "reason": {
                     "type": "string"
                 }
             }

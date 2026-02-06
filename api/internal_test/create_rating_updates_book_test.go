@@ -22,7 +22,7 @@ func TestCreateRatingRaisesEvent_EventUpdatesBook(t *testing.T) {
 		// Arrange: DI
 		txRunner := testutil.NewTestTxRunner(tx)
 		bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
-		reviewService := reviews.NewReviewService(reviews.NewReviewRepo())
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
 		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
 		ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)
 

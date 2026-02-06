@@ -6,12 +6,16 @@ import (
 )
 
 type ReviewService struct {
-	repo *ReviewRepo
+	repo                     *ReviewRepo
+	db                       db.DBTX
+	reviewVisiblityThreshold int
 }
 
-func NewReviewService(repo *ReviewRepo) *ReviewService {
+func NewReviewService(repo *ReviewRepo, db db.DBTX, reviewVisiblityThreshold int) *ReviewService {
 	return &ReviewService{
-		repo: repo,
+		repo:                     repo,
+		db:                       db,
+		reviewVisiblityThreshold: reviewVisiblityThreshold,
 	}
 }
 
@@ -24,6 +28,29 @@ func (s *ReviewService) CreateReview(ratingID, reviewText string, ctx context.Co
 	}
 
 	err = s.repo.create(review, ctx, tx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ReviewService) GetReviewByID(ctx context.Context, reviewID string) (*Review, error) {
+	review, err := s.repo.getByID(ctx, s.db, reviewID)
+	if err != nil {
+		return nil, err
+	}
+	return review, nil
+}
+
+func (s *ReviewService) HandleReviewReported(ctx context.Context, tx db.DBTX, reviewID string) error {
+	review, err := s.repo.getByID(ctx, tx, reviewID)
+	if err != nil {
+		return err
+	}
+	if review == nil {
+		return nil
+	}
+	err = s.repo.incrementReportCount(ctx, tx, reviewID, s.reviewVisiblityThreshold)
 	if err != nil {
 		return err
 	}
