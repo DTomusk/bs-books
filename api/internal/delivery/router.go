@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/auth"
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/books/search"
+	"bs-books-api/internal/content_moderation"
 	"bs-books-api/internal/logging"
 	"bs-books-api/internal/ratings"
 	"bs-books-api/internal/reviews"
@@ -23,6 +24,7 @@ func NewRouter(
 	reviewHandler *reviews.ReviewHandler,
 	jwtService *auth.JWTService,
 	bookHandler *books.BookHandler,
+	contentModerationHandler *content_moderation.ContentModerationHandler,
 ) *gin.Engine {
 	r := gin.New()
 	r.Use(logging.RequestLoggerMiddleware)
@@ -56,6 +58,15 @@ func NewRouter(
 		reviewRoutes := booksRoutes.Group("/:id/reviews")
 		{
 			reviewRoutes.GET("", reviewHandler.GetReviewsByBookID)
+		}
+	}
+
+	contentModerationRoutes := api.Group("/moderation")
+	{
+		protected := contentModerationRoutes.Group("")
+		protected.Use(auth.AuthMiddleware(jwtService))
+		{
+			protected.POST("/report", contentModerationHandler.ReportContent)
 		}
 	}
 

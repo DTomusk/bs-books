@@ -7,6 +7,7 @@ import (
 	"bs-books-api/internal/books/extraction"
 	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
+	"bs-books-api/internal/content_moderation"
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/delivery"
 	"bs-books-api/internal/events"
@@ -107,6 +108,8 @@ func main() {
 	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
+	contentModerationHandler := content_moderation.NewContentModerationHandler(content_moderation.NewContentModerationService(database, content_moderation.NewContentModerationRepo(), eventService, reviewService, userService))
+
 	r := delivery.NewRouter(
 		authHandler,
 		searchHandler,
@@ -115,6 +118,7 @@ func main() {
 		reviewHandler,
 		jwtService,
 		bookHandler,
+		contentModerationHandler,
 	)
 
 	srv := &http.Server{

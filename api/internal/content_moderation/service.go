@@ -3,6 +3,7 @@ package content_moderation
 import (
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/events"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/users"
 	"context"
@@ -37,18 +38,25 @@ func (s *ContentModerationService) ReportContent(ctx context.Context, contentID,
 	var eventType string
 	var eventPayload any
 
+	logger := logging.FromContext(ctx)
+
+	logger.Info("Reporting content", "contentID", contentID, "contentType", contentType, "reason", reason, "userID", userID)
 	switch contentType {
 	case Review:
+		logger.Info("Reporting review")
 		existing_review, err := s.reviewService.GetReviewByID(ctx, contentID)
 		if err != nil || existing_review == nil {
+			logger.Error("Review not found", "contentID", contentID, "error", err)
 			return ErrContentElementDoesntExist
 		}
 		contentSnapshot = existing_review.Text
 		eventType = EventReviewReported
 		eventPayload = ReviewReportedEventPayload{}
 	case User:
+		logger.Info("Reporting user")
 		user, err := s.userService.GetUserByID(contentID, ctx)
 		if err != nil || user == nil {
+			logger.Error("User not found", "contentID", contentID, "error", err)
 			return ErrContentElementDoesntExist
 		}
 		contentSnapshot = user.Username
@@ -60,9 +68,11 @@ func (s *ContentModerationService) ReportContent(ctx context.Context, contentID,
 
 	existing_report, err := s.repo.GetReportByUserByContentID(ctx, s.db, userID, contentID)
 	if err != nil {
+		logger.Error("Failed to check existing report", "contentID", contentID, "userID", userID, "error", err)
 		return err
 	}
 	if existing_report != nil {
+		logger.Warn("User has already reported this content", "contentID", contentID, "userID", userID)
 		return ErrAlreadyReported
 	}
 
@@ -83,6 +93,8 @@ func (s *ContentModerationService) ReportContent(ctx context.Context, contentID,
 	if err != nil {
 		return err
 	}
+
+	logger.Info("Content reported successfully", "contentID", contentID, "contentType", contentType, "userID", userID)
 
 	return nil
 }

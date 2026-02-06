@@ -16,6 +16,19 @@ func NewContentModerationHandler(service *ContentModerationService) *ContentMode
 	}
 }
 
+// ReportContent godoc
+// @Summary Report inappropriate content
+// @Description Report a review or user for inappropriate content or behavior
+// @Tags Content Moderation
+// @Accept json
+// @Produce json
+// @Param report body ReportContentRequest true "Report content request"
+// @Success 200
+// @Failure 400 {object} response.ErrorResponse "Invalid request"
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /moderation/report [post]
+// @Security BearerAuth
 func (h *ContentModerationHandler) ReportContent(c *gin.Context) {
 	ctx := c.Request.Context()
 

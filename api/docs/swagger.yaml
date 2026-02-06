@@ -45,6 +45,21 @@ definitions:
       title:
         type: string
     type: object
+  content_moderation.ReportContentRequest:
+    properties:
+      content_id:
+        type: string
+      content_type:
+        enum:
+        - review
+        type: string
+      reason:
+        type: string
+    required:
+    - content_id
+    - content_type
+    - reason
+    type: object
   ratings.RatingRequest:
     properties:
       book_id:
@@ -301,6 +316,40 @@ paths:
       summary: Search Books
       tags:
       - Books
+  /moderation/report:
+    post:
+      consumes:
+      - application/json
+      description: Report a review or user for inappropriate content or behavior
+      parameters:
+      - description: Report content request
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/content_moderation.ReportContentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Report inappropriate content
+      tags:
+      - Content Moderation
   /ratings:
     post:
       consumes:
