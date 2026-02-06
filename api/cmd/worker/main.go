@@ -133,12 +133,37 @@ func main() {
 						return err
 					}
 
+					err = eventService.MarkEventProcessed(ctx, tx, event.ID)
+					if err != nil {
+						slog.Error("Failed to mark event as processed", "error", err, "eventID", event.ID)
+						return err
+					}
+
+					slog.Info("Successfully processed review reported event", "eventID", event.ID)
+
 					return nil
 				})
 				if err != nil {
 					slog.Error("Failed to process review reported event", "error", err, "eventID", event.ID)
 					continue
 				}
+			case content_moderation.EventUserReported:
+				err = txRunner.WithTx(ctx, func(tx *sql.Tx) error {
+					userID := event.AggregateID
+
+					slog.Info("Processing user reported event", "userID", userID)
+
+					// TODO: implement handling, for now just mark as processed
+					err = eventService.MarkEventProcessed(ctx, tx, event.ID)
+					if err != nil {
+						slog.Error("Failed to mark event as processed", "error", err, "eventID", event.ID)
+						return err
+					}
+
+					slog.Info("Successfully processed user reported event", "eventID", event.ID)
+
+					return nil
+				})
 			default:
 				slog.Warn("Unknown event type", "type", event.Type, "eventID", event.ID)
 			}

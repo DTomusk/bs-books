@@ -22,7 +22,7 @@ func TestReportReview_Success(t *testing.T) {
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 1)
 		repo := content_moderation.NewContentModerationRepo()
 		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
-		service := content_moderation.NewContentModerationService(tx, repo, eventService, reviewService)
+		service := content_moderation.NewContentModerationService(tx, repo, eventService, reviewService, nil)
 		reviewReader := queries.NewReviewReader(tx)
 
 		// Seed data
@@ -70,7 +70,7 @@ func TestReportReview_HigherThreshold_Success(t *testing.T) {
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 2)
 		repo := content_moderation.NewContentModerationRepo()
 		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
-		service := content_moderation.NewContentModerationService(tx, repo, eventService, reviewService)
+		service := content_moderation.NewContentModerationService(tx, repo, eventService, reviewService, nil)
 		reviewReader := queries.NewReviewReader(tx)
 
 		// Seed data

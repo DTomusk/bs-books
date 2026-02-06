@@ -14,7 +14,7 @@ import (
 func TestInvalidContentType_ReturnsError(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
-		service := NewContentModerationService(tx, nil, nil, nil)
+		service := NewContentModerationService(tx, nil, nil, nil, nil)
 		ctx := context.Background()
 
 		// Act
@@ -34,7 +34,7 @@ func TestReportReview_ReviewDoesNotExist_ReturnsError(t *testing.T) {
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
 		repo := NewContentModerationRepo()
 		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
-		service := NewContentModerationService(tx, repo, eventService, reviewService)
+		service := NewContentModerationService(tx, repo, eventService, reviewService, nil)
 
 		// Act
 		err := service.ReportContent(ctx, "non-existent-review-id", Review, "Inappropriate content", "user-id")
@@ -54,7 +54,7 @@ func TestReportReview_Success(t *testing.T) {
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
 		repo := NewContentModerationRepo()
 		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
-		service := NewContentModerationService(tx, repo, eventService, reviewService)
+		service := NewContentModerationService(tx, repo, eventService, reviewService, nil)
 
 		// Seed data
 		testutil.SeedAuthors(tx)
@@ -86,7 +86,7 @@ func TestReportReview_DuplicateReport_Errors(t *testing.T) {
 		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
 		repo := NewContentModerationRepo()
 		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
-		service := NewContentModerationService(tx, repo, eventService, reviewService)
+		service := NewContentModerationService(tx, repo, eventService, reviewService, nil)
 
 		// Seed data
 		testutil.SeedAuthors(tx)
