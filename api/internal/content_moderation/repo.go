@@ -50,11 +50,11 @@ func (r *ContentModerationRepo) GetReportByUserByContentID(ctx context.Context, 
 	return &contentReport, nil
 }
 
-func (r *ContentModerationRepo) CreateReport(ctx context.Context, db db.DBTX, userID, contentID, contentType, reason string) error {
+func (r *ContentModerationRepo) CreateReport(ctx context.Context, db db.DBTX, report *ContentModerationReport) error {
 	const query = `
-	INSERT INTO moderation_reports (reporter_id, content_id, content_type, reason, created_at, status) VALUES ($1, $2, $3, $4, NOW(), 'pending_review')
+	INSERT INTO moderation_reports (id, reporter_id, content_id, content_type, content_snapshot, reason, created_at, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
-	_, err := db.ExecContext(ctx, query, userID, contentID, contentType, reason)
+	_, err := db.ExecContext(ctx, query, report.ID, report.UserID, report.ContentID, report.ContentType, report.ContentSnapshot, report.Reason, report.CreatedAt, report.Status)
 	return err
 }

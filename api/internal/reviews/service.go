@@ -34,12 +34,12 @@ func (s *ReviewService) CreateReview(ratingID, reviewText string, ctx context.Co
 	return nil
 }
 
-func (s *ReviewService) GetReviewExists(ctx context.Context, reviewID string) (bool, error) {
+func (s *ReviewService) GetReviewByID(ctx context.Context, reviewID string) (*Review, error) {
 	review, err := s.repo.getByID(ctx, s.db, reviewID)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return review != nil, nil
+	return review, nil
 }
 
 func (s *ReviewService) HandleReviewReported(ctx context.Context, tx db.DBTX, reviewID string) error {

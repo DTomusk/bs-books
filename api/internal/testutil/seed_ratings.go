@@ -22,5 +22,5 @@ func SeedRatingsAndReviews(tx *sql.Tx, book_id, user_id string, heart_score, poo
 	review_query := `INSERT INTO reviews (id, rating_id, review) VALUES ($1, $2, $3)`
 	tx.Exec(review_query, review_id, rating_id, "Great book!")
 
-	return []string{rating_id}
+	return []string{rating_id, review_id}
 }

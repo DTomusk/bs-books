@@ -93,7 +93,6 @@ func main() {
 	authService := auth.NewAuthService(database, userService, jwtService)
 	authHandler := auth.NewAuthHandler(authService)
 
-	// TODO: make thresholds configurable
 	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)
 	bookReader := queries.NewBookReader(database)
 	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
