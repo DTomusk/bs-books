@@ -4,6 +4,7 @@ import (
 	"bs-books-api/internal/events"
 	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/testutil"
+	"bs-books-api/internal/users"
 	"context"
 	"database/sql"
 	"testing"
@@ -111,5 +112,53 @@ func TestReportReview_DuplicateReport_Errors(t *testing.T) {
 		err = service.ReportContent(ctx, ids[1], Review, "Inappropriate content", userIDs[0])
 		require.NotNil(t, err)
 		require.Equal(t, ErrAlreadyReported, err)
+	})
+}
+
+func TestReportUser_UserDoesNotExist_ReturnsError(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		userService := users.NewUserService(tx, users.NewUserRepo())
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, nil, userService)
+
+		// Act
+		err := service.ReportContent(ctx, "non-existent-user-id", User, "Offensive username", "user-id")
+
+		// Assert
+		require.NotNil(t, err)
+		require.Equal(t, ErrContentElementDoesntExist, err)
+	})
+}
+
+func TestReportUser_Success(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		// DI
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		userService := users.NewUserService(tx, users.NewUserRepo())
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, nil, userService)
+
+		// Seed data
+		userIDs := testutil.SeedUsers(tx)
+
+		// Act
+		err := service.ReportContent(ctx, userIDs[1], User, "Inappropriate content", userIDs[0])
+
+		// Assert
+		require.Nil(t, err)
+
+		// Dequeue event to check it was raised successfully
+		event, err := eventService.DequeueEvent(ctx)
+		require.Nil(t, err)
+		require.NotNil(t, event)
+		require.Equal(t, EventUserReported, event.Type)
+		require.Equal(t, userIDs[1], event.AggregateID)
 	})
 }
