@@ -1,4 +1,4 @@
-package auth
+package refresh_token
 
 import (
 	"crypto/hmac"

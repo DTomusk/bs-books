@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/users"
 	"context"
@@ -10,10 +11,10 @@ type AuthService struct {
 	db                  db.DBTX
 	userService         *users.UserService
 	jwtService          *JWTService
-	refreshTokenService *RefreshTokenService
+	refreshTokenService *refresh_token.RefreshTokenService
 }
 
-func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *JWTService, refreshTokenService *RefreshTokenService) *AuthService {
+func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *JWTService, refreshTokenService *refresh_token.RefreshTokenService) *AuthService {
 	return &AuthService{
 		db:                  db,
 		userService:         userService,
@@ -64,7 +65,7 @@ func (s *AuthService) Register(ctx context.Context, username, email, password st
 	return err
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string, ipAddress string) (string, *RefreshToken, error) {
+func (s *AuthService) Login(ctx context.Context, email, password string, ipAddress string) (string, *refresh_token.RefreshToken, error) {
 	user, err := s.userService.GetUserByEmail(email, ctx)
 	if err != nil {
 		return "", nil, err
@@ -83,7 +84,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string, ipAddre
 		return "", nil, err
 	}
 
-	refreshToken, err := s.refreshTokenService.CreateAndRotate(user.ID, ipAddress)
+	refreshToken, err := s.refreshTokenService.NewSession(ctx, user.ID, ipAddress)
 
 	if err != nil {
 		return "", nil, err

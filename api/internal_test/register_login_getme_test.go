@@ -2,6 +2,7 @@ package internal_test
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/delivery/response"
 	"bs-books-api/internal/testutil"
 	"bs-books-api/internal/users"
@@ -46,7 +47,7 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		userRepo := users.NewUserRepo()
 		userService := users.NewUserService(tx, userRepo)
 		userHandler := users.NewUserHandler(userService)
-		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"), auth.NewRefreshTokenRepo())
+		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		authService := auth.NewAuthService(tx, userService, jwtService, refreshTokenService)
 		router := setupAuthRouter(jwtService, authService, userHandler)
 
@@ -102,7 +103,7 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 func TestGetMe_NoAuthHeader(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
-		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"), auth.NewRefreshTokenRepo())
+		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		router := setupAuthRouter(
 			jwtService,
 			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),
@@ -120,7 +121,7 @@ func TestGetMe_NoAuthHeader(t *testing.T) {
 func TestGetMe_InvalidToken(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
-		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"), auth.NewRefreshTokenRepo())
+		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		router := setupAuthRouter(
 			jwtService,
 			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),

@@ -2,6 +2,7 @@ package internal_test
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/delivery/response"
 	"bs-books-api/internal/events"
@@ -57,7 +58,7 @@ func TestRegisterLoginPostRatingWithReview_Success(t *testing.T) {
 		userRepo := users.NewUserRepo()
 		userService := users.NewUserService(tx, userRepo)
 		userHandler := users.NewUserHandler(userService)
-		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"), auth.NewRefreshTokenRepo())
+		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		authService := auth.NewAuthService(tx, userService, jwtService, refreshTokenService)
 		ratingRepo := ratings.NewRatingRepo()
 		bookRepo := books.NewBooksRepo()
