@@ -92,7 +92,7 @@ func main() {
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
 	refreshTokenService := auth.NewRefreshTokenService(cfg.REFRESH_TOKEN_EXPIRY_DAYS, auth.NewTokenHasher(cfg.REFRESH_TOKEN_HASH_SALT))
-	authService := auth.NewAuthService(database, auth.NewAuthRepo(), userService, jwtService, refreshTokenService)
+	authService := auth.NewAuthService(database, userService, jwtService, refreshTokenService)
 	authHandler := auth.NewAuthHandler(authService)
 
 	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)

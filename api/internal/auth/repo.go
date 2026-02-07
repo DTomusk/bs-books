@@ -5,19 +5,19 @@ import (
 	"context"
 )
 
-type AuthRepo struct{}
+type RefreshTokenRepo struct{}
 
-func NewAuthRepo() *AuthRepo {
-	return &AuthRepo{}
+func NewRefreshTokenRepo() *RefreshTokenRepo {
+	return &RefreshTokenRepo{}
 }
 
-func (r *AuthRepo) RevokeRefreshTokensForUser(userID string) error {
+func (r *RefreshTokenRepo) RevokeRefreshTokensForUser(userID string) error {
 	return nil
 }
 
 // Creates a brand new refresh token that isn't descended from another
 // Hence family_id is omitted
-func (r *AuthRepo) CreateNewRefreshToken(
+func (r *RefreshTokenRepo) CreateNewRefreshToken(
 	ctx context.Context,
 	db db.DBTX,
 	tokenHash string,

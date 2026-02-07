@@ -8,16 +8,14 @@ import (
 
 type AuthService struct {
 	db                  db.DBTX
-	repo                *AuthRepo
 	userService         *users.UserService
 	jwtService          *JWTService
 	refreshTokenService *RefreshTokenService
 }
 
-func NewAuthService(db db.DBTX, repo *AuthRepo, userService *users.UserService, jwtService *JWTService, refreshTokenService *RefreshTokenService) *AuthService {
+func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *JWTService, refreshTokenService *RefreshTokenService) *AuthService {
 	return &AuthService{
 		db:                  db,
-		repo:                repo,
 		userService:         userService,
 		jwtService:          jwtService,
 		refreshTokenService: refreshTokenService,
@@ -81,13 +79,6 @@ func (s *AuthService) Login(ctx context.Context, email, password string, ipAddre
 	}
 
 	token, err := s.jwtService.GenerateJWT(user.ID)
-	if err != nil {
-		return "", nil, err
-	}
-
-	// TODO: revoke existing refresh tokens for user
-	err = s.repo.RevokeRefreshTokensForUser(user.ID)
-
 	if err != nil {
 		return "", nil, err
 	}
