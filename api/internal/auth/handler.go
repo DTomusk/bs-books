@@ -70,7 +70,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, refreshToken, err := h.service.Login(ctx, req.Email, req.Password)
+	token, refreshToken, err := h.service.Login(ctx, req.Email, req.Password, c.ClientIP())
 	if err != nil {
 		switch err {
 		case ErrInvalidCredentials:

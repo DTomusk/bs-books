@@ -46,7 +46,8 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		userRepo := users.NewUserRepo()
 		userService := users.NewUserService(tx, userRepo)
 		userHandler := users.NewUserHandler(userService)
-		authService := auth.NewAuthService(tx, auth.NewAuthRepo(), userService, jwtService, 7)
+		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"))
+		authService := auth.NewAuthService(tx, auth.NewAuthRepo(), userService, jwtService, refreshTokenService)
 		router := setupAuthRouter(jwtService, authService, userHandler)
 
 		// 1. Register
@@ -101,9 +102,10 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 func TestGetMe_NoAuthHeader(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
+		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"))
 		router := setupAuthRouter(
 			jwtService,
-			auth.NewAuthService(tx, auth.NewAuthRepo(), users.NewUserService(tx, users.NewUserRepo()), jwtService, 7),
+			auth.NewAuthService(tx, auth.NewAuthRepo(), users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),
 			users.NewUserHandler(users.NewUserService(tx, users.NewUserRepo())),
 		)
 		meReq := jsonRequest("GET", "/api/users/me", nil)
@@ -118,9 +120,10 @@ func TestGetMe_NoAuthHeader(t *testing.T) {
 func TestGetMe_InvalidToken(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
+		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"))
 		router := setupAuthRouter(
 			jwtService,
-			auth.NewAuthService(tx, auth.NewAuthRepo(), users.NewUserService(tx, users.NewUserRepo()), jwtService, 7),
+			auth.NewAuthService(tx, auth.NewAuthRepo(), users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),
 			users.NewUserHandler(users.NewUserService(tx, users.NewUserRepo())),
 		)
 		meReq := jsonRequest("GET", "/api/users/me", nil)

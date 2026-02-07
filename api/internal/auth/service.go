@@ -7,20 +7,20 @@ import (
 )
 
 type AuthService struct {
-	db                     db.DBTX
-	repo                   *AuthRepo
-	userService            *users.UserService
-	jwtService             *JWTService
-	refreshTokenExpiryDays int
+	db                  db.DBTX
+	repo                *AuthRepo
+	userService         *users.UserService
+	jwtService          *JWTService
+	refreshTokenService *RefreshTokenService
 }
 
-func NewAuthService(db db.DBTX, repo *AuthRepo, userService *users.UserService, jwtService *JWTService, refreshTokenExpiryDays int) *AuthService {
+func NewAuthService(db db.DBTX, repo *AuthRepo, userService *users.UserService, jwtService *JWTService, refreshTokenService *RefreshTokenService) *AuthService {
 	return &AuthService{
-		db:                     db,
-		repo:                   repo,
-		userService:            userService,
-		jwtService:             jwtService,
-		refreshTokenExpiryDays: refreshTokenExpiryDays,
+		db:                  db,
+		repo:                repo,
+		userService:         userService,
+		jwtService:          jwtService,
+		refreshTokenService: refreshTokenService,
 	}
 }
 
@@ -66,7 +66,7 @@ func (s *AuthService) Register(ctx context.Context, username, email, password st
 	return err
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (string, *RefreshToken, error) {
+func (s *AuthService) Login(ctx context.Context, email, password string, ipAddress string) (string, *RefreshToken, error) {
 	user, err := s.userService.GetUserByEmail(email, ctx)
 	if err != nil {
 		return "", nil, err
@@ -92,13 +92,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 		return "", nil, err
 	}
 
-	refreshToken, err := NewRefreshToken(user.ID, s.refreshTokenExpiryDays)
-
-	if err != nil {
-		return "", nil, err
-	}
-
-	err = s.repo.SaveRefreshToken(refreshToken)
+	refreshToken, err := s.refreshTokenService.CreateAndRotate(user.ID, ipAddress)
 
 	if err != nil {
 		return "", nil, err
