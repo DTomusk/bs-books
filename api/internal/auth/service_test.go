@@ -17,7 +17,8 @@ func TestRegister_Success(t *testing.T) {
 		// Arrange
 		userService := users.NewUserService(tx, users.NewUserRepo())
 		jwtService := NewJWTService("test_secret_key", 15)
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, userService, jwtService, refreshTokenService)
 		ctx := context.Background()
 
@@ -31,7 +32,8 @@ func TestRegister_Success(t *testing.T) {
 
 func TestRegister_WeakPassword(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, nil, nil, refreshTokenService)
 		ctx := context.Background()
 		err := testService.Register(ctx, "blah", "blah@mail.com", "123")
@@ -42,7 +44,8 @@ func TestRegister_WeakPassword(t *testing.T) {
 
 func TestRegister_InvalidEmail(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, nil, nil, refreshTokenService)
 		ctx := context.Background()
 		err := testService.Register(ctx, "user", "invalid-email", "strongpassword")
@@ -55,7 +58,8 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		userService := users.NewUserService(tx, users.NewUserRepo())
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, userService, nil, refreshTokenService)
 		ctx := context.Background()
 		err := testService.Register(ctx, "testuser", "test@email.com", "password123")
@@ -74,7 +78,8 @@ func TestRegister_DuplicateUsername(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
 		userService := users.NewUserService(tx, users.NewUserRepo())
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, userService, nil, refreshTokenService)
 		ctx := context.Background()
 		err := testService.Register(ctx, "testuser", "test@example.com", "password123")
@@ -94,7 +99,8 @@ func TestLogin_Success(t *testing.T) {
 		// Arrange
 		userService := users.NewUserService(tx, users.NewUserRepo())
 		jwtService := NewJWTService("test_secret_key", 15)
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, userService, jwtService, refreshTokenService)
 		ctx := context.Background()
 		err := testService.Register(ctx, "testuser", "test@example.com", "password123")
@@ -107,17 +113,21 @@ func TestLogin_Success(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, token)
 		require.NotNil(t, refreshToken)
-		require.Equal(t, "testuser", refreshToken.UserID)
 		require.Greater(t, refreshToken.ExpiresAt, time.Now().Unix())
+		require.False(t, refreshToken.IsRevoked)
+		require.NotEmpty(t, refreshToken.FamilyID)
+		require.NotEmpty(t, refreshToken.TokenHash)
+		require.NotEqual(t, refreshToken.TokenHash, refreshToken.Token)
 	})
 }
 
 func TestLogin_WrongEmail(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		// Arrange
+		txRunner := testutil.NewTestTxRunner(tx)
 		userService := users.NewUserService(tx, users.NewUserRepo())
 		jwtService := NewJWTService("test_secret_key", 15)
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, userService, jwtService, refreshTokenService)
 		ctx := context.Background()
 
@@ -135,7 +145,8 @@ func TestLogin_WrongPassword(t *testing.T) {
 		// Arrange
 		userService := users.NewUserService(tx, users.NewUserRepo())
 		jwtService := NewJWTService("test_secret_key", 15)
-		refreshTokenService := refresh_token.NewRefreshTokenService(tx, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		testService := NewAuthService(tx, userService, jwtService, refreshTokenService)
 		ctx := context.Background()
 		err := testService.Register(ctx, "testuser", "test@example.com", "password123")

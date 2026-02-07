@@ -92,3 +92,8 @@ func (s *AuthService) Login(ctx context.Context, email, password string, ipAddre
 
 	return token, refreshToken, nil
 }
+
+func (s *AuthService) RefreshToken(ctx context.Context, oldRefreshToken string, ipAddress string) (string, *refresh_token.RefreshToken, error) {
+
+	return "", nil, nil
+}

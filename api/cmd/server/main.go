@@ -92,7 +92,7 @@ func main() {
 	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
-	refreshTokenService := refresh_token.NewRefreshTokenService(database, cfg.REFRESH_TOKEN_EXPIRY_DAYS, refresh_token.NewTokenHasher(cfg.REFRESH_TOKEN_HASH_SALT), refresh_token.NewRefreshTokenRepo())
+	refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, cfg.REFRESH_TOKEN_EXPIRY_DAYS, refresh_token.NewTokenHasher(cfg.REFRESH_TOKEN_HASH_SALT), refresh_token.NewRefreshTokenRepo())
 	authService := auth.NewAuthService(database, userService, jwtService, refreshTokenService)
 	authHandler := auth.NewAuthHandler(authService)
 

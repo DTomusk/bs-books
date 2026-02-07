@@ -8,8 +8,9 @@ type RefreshToken struct {
 	TokenHash string
 	IsRevoked bool
 	// ExpiresAt is a unix timestamp in seconds
-	ExpiresAt int64
-	UserID    string
-	IPAddress string
-	FamilyID  string
+	ExpiresAt    int64
+	UserID       string
+	IPAddress    string
+	FamilyID     string
+	ReplacedByID *string
 }

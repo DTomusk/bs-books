@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/delivery/response"
 	"time"
 
@@ -70,7 +71,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, refreshToken, err := h.service.Login(ctx, req.Email, req.Password, c.ClientIP())
+	jwt, refreshToken, err := h.service.Login(ctx, req.Email, req.Password, c.ClientIP())
 	if err != nil {
 		switch err {
 		case ErrInvalidCredentials:
@@ -93,5 +94,46 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		true,
 	)
 
-	c.JSON(200, response.Success[string]{Data: token})
+	c.JSON(200, response.Success[string]{Data: jwt})
+}
+
+// RefreshToken godoc
+// @Summary Refresh JWT token
+// @Description Refresh JWT token using refresh token cookie
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Router /auth/refresh [post]
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	ctx := c.Request.Context()
+	refreshToken, err := c.Cookie("refresh_token")
+
+	if err != nil {
+		c.JSON(401, response.NewError("missing_refresh_token", "Refresh token cookie is required"))
+		return
+	}
+
+	jwt, newRefreshToken, err := h.service.RefreshToken(ctx, refreshToken, c.ClientIP())
+	if err != nil {
+		switch err {
+		case refresh_token.ErrInvalidRefreshToken:
+			c.JSON(401, response.NewError("invalid_refresh_token", "Invalid refresh token"))
+			return
+		}
+		c.JSON(500, response.NewInternalServerError(err.Error()))
+		return
+	}
+
+	c.SetCookie(
+		"refresh_token",
+		newRefreshToken.Token,
+		int(newRefreshToken.ExpiresAt-time.Now().Unix()),
+		"/",
+		"",
+		// TODO: set to true in production
+		false,
+		true,
+	)
+
+	c.JSON(200, response.Success[string]{Data: jwt})
 }
