@@ -46,7 +46,7 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		userRepo := users.NewUserRepo()
 		userService := users.NewUserService(tx, userRepo)
 		userHandler := users.NewUserHandler(userService)
-		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"))
+		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"), auth.NewRefreshTokenRepo())
 		authService := auth.NewAuthService(tx, userService, jwtService, refreshTokenService)
 		router := setupAuthRouter(jwtService, authService, userHandler)
 
@@ -102,7 +102,7 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 func TestGetMe_NoAuthHeader(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
-		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"))
+		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"), auth.NewRefreshTokenRepo())
 		router := setupAuthRouter(
 			jwtService,
 			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),
@@ -120,7 +120,7 @@ func TestGetMe_NoAuthHeader(t *testing.T) {
 func TestGetMe_InvalidToken(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
-		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"))
+		refreshTokenService := auth.NewRefreshTokenService(7, auth.NewTokenHasher("abc"), auth.NewRefreshTokenRepo())
 		router := setupAuthRouter(
 			jwtService,
 			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),

@@ -37,12 +37,14 @@ func NewRefreshToken(userID string, expiresInDays int, ipAddress string) (*Refre
 type RefreshTokenService struct {
 	tokenExpiryDays int
 	hasher          *TokenHasher
+	repo            *RefreshTokenRepo
 }
 
-func NewRefreshTokenService(tokenExpiryDays int, hasher *TokenHasher) *RefreshTokenService {
+func NewRefreshTokenService(tokenExpiryDays int, hasher *TokenHasher, repo *RefreshTokenRepo) *RefreshTokenService {
 	return &RefreshTokenService{
 		tokenExpiryDays: tokenExpiryDays,
 		hasher:          hasher,
+		repo:            repo,
 	}
 }
 
