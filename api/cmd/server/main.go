@@ -91,7 +91,7 @@ func main() {
 	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
-	authService := auth.NewAuthService(database, userService, jwtService)
+	authService := auth.NewAuthService(database, auth.NewAuthRepo(), userService, jwtService, cfg.REFRESH_TOKEN_EXPIRY_DAYS)
 	authHandler := auth.NewAuthHandler(authService)
 
 	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)

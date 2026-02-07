@@ -16,6 +16,7 @@ type Config struct {
 	EVENTS_RETRY_DELAY_SECONDS  int
 	AUTHOR_SIMILARITY_THRESHOLD float64
 	REVIEW_VISIBILITY_THRESHOLD int
+	REFRESH_TOKEN_EXPIRY_DAYS   int
 }
 
 var (
@@ -72,6 +73,16 @@ func LoadConfig() (*Config, error) {
 	reviewVisibilityThresholdStr := os.Getenv("REVIEW_VISIBILITY_THRESHOLD")
 	reviewVisibilityThreshold, err := strconv.Atoi(reviewVisibilityThresholdStr)
 
+	if err != nil || reviewVisibilityThresholdStr == "" {
+		return nil, fmt.Errorf("invalid or missing REVIEW_VISIBILITY_THRESHOLD value: %v", err)
+	}
+
+	refreshTokenExpiryDaysStr := os.Getenv("REFRESH_TOKEN_EXPIRY_DAYS")
+	refreshTokenExpiryDays, err := strconv.Atoi(refreshTokenExpiryDaysStr)
+	if err != nil || refreshTokenExpiryDaysStr == "" {
+		return nil, fmt.Errorf("invalid or missing REFRESH_TOKEN_EXPIRY_DAYS value: %v", err)
+	}
+
 	return &Config{
 		DB_URL:                      dbURL,
 		JWT_SECRET_KEY:              jwtSecretKey,
@@ -82,5 +93,6 @@ func LoadConfig() (*Config, error) {
 		EVENTS_RETRY_DELAY_SECONDS:  eventsRetryDelaySeconds,
 		AUTHOR_SIMILARITY_THRESHOLD: authorSimilarityThreshold,
 		REVIEW_VISIBILITY_THRESHOLD: reviewVisibilityThreshold,
+		REFRESH_TOKEN_EXPIRY_DAYS:   refreshTokenExpiryDays,
 	}, nil
 }

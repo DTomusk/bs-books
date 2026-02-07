@@ -7,16 +7,20 @@ import (
 )
 
 type AuthService struct {
-	db          db.DBTX
-	userService *users.UserService
-	jwtService  *JWTService
+	db                     db.DBTX
+	repo                   *AuthRepo
+	userService            *users.UserService
+	jwtService             *JWTService
+	refreshTokenExpiryDays int
 }
 
-func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *JWTService) *AuthService {
+func NewAuthService(db db.DBTX, repo *AuthRepo, userService *users.UserService, jwtService *JWTService, refreshTokenExpiryDays int) *AuthService {
 	return &AuthService{
-		db:          db,
-		userService: userService,
-		jwtService:  jwtService,
+		db:                     db,
+		repo:                   repo,
+		userService:            userService,
+		jwtService:             jwtService,
+		refreshTokenExpiryDays: refreshTokenExpiryDays,
 	}
 }
 
@@ -62,25 +66,43 @@ func (s *AuthService) Register(ctx context.Context, username, email, password st
 	return err
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {
+func (s *AuthService) Login(ctx context.Context, email, password string) (string, *RefreshToken, error) {
 	user, err := s.userService.GetUserByEmail(email, ctx)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	if user == nil {
-		return "", ErrInvalidCredentials
+		return "", nil, ErrInvalidCredentials
 	}
 
 	if err := comparePassword(user.PasswordHash, password); err != nil {
-		return "", ErrInvalidCredentials
+		return "", nil, ErrInvalidCredentials
 	}
 
-	// TODO: generate and return JWT token
 	token, err := s.jwtService.GenerateJWT(user.ID)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return token, nil
+	// TODO: revoke existing refresh tokens for user
+	err = s.repo.RevokeRefreshTokensForUser(user.ID)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	refreshToken, err := NewRefreshToken(user.ID, s.refreshTokenExpiryDays)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	err = s.repo.SaveRefreshToken(refreshToken)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	return token, refreshToken, nil
 }

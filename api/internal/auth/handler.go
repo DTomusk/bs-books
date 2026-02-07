@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bs-books-api/internal/delivery/response"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -69,7 +70,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Login(ctx, req.Email, req.Password)
+	token, refreshToken, err := h.service.Login(ctx, req.Email, req.Password)
 	if err != nil {
 		switch err {
 		case ErrInvalidCredentials:
@@ -79,6 +80,18 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		c.JSON(500, response.NewInternalServerError(err.Error()))
 		return
 	}
+
+	// Set http only cookie with refresh token
+	c.SetCookie(
+		"refresh_token",
+		refreshToken.Token,
+		int(refreshToken.ExpiresAt-time.Now().Unix()),
+		"/",
+		"",
+		// TODO: set to true in production
+		false,
+		true,
+	)
 
 	c.JSON(200, response.Success[string]{Data: token})
 }

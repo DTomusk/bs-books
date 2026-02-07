@@ -57,7 +57,7 @@ func TestRegisterLoginPostRatingWithReview_Success(t *testing.T) {
 		userRepo := users.NewUserRepo()
 		userService := users.NewUserService(tx, userRepo)
 		userHandler := users.NewUserHandler(userService)
-		authService := auth.NewAuthService(tx, userService, jwtService)
+		authService := auth.NewAuthService(tx, auth.NewAuthRepo(), userService, jwtService, 7)
 		ratingRepo := ratings.NewRatingRepo()
 		bookRepo := books.NewBooksRepo()
 		bookService := books.NewBooksService(txRunner, bookRepo)
