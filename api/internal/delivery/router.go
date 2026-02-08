@@ -44,6 +44,8 @@ func NewRouter(
 	{
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
+		authRoutes.POST("/logout", authHandler.Logout)
+		authRoutes.POST("/refresh", authHandler.RefreshToken)
 	}
 
 	booksRoutes := api.Group("/books")

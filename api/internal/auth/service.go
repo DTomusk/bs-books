@@ -104,3 +104,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, oldRefreshToken string, 
 	}
 	return newJWT, newRefreshToken, nil
 }
+
+func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
+	return s.refreshTokenService.RevokeSession(ctx, refreshToken)
+}

@@ -144,3 +144,25 @@ func (s *RefreshTokenService) createChildToken(parent *RefreshToken, ipAddress s
 	childToken.FamilyID = parent.FamilyID
 	return childToken, nil
 }
+
+func (s *RefreshTokenService) RevokeSession(ctx context.Context, refreshToken string) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("Revoking session with refresh token", "refreshToken", refreshToken)
+	tokenHash := s.hasher.Hash(refreshToken)
+	token, err := s.repo.GetRefreshTokenByHash(ctx, s.txRunner.DB(), tokenHash)
+	if err != nil {
+		logger.Error("Failed to fetch refresh token by hash for revocation", "error", err)
+		return err
+	}
+	if token == nil {
+		logger.Warn("No refresh token found for hash during revocation", "tokenHash", tokenHash)
+		return ErrInvalidRefreshToken
+	}
+	err = s.repo.RevokeRefreshTokensForFamily(ctx, s.txRunner.DB(), token.FamilyID)
+	if err != nil {
+		logger.Error("Failed to revoke refresh token family during revocation", "familyID", token.FamilyID, "error", err)
+		return err
+	}
+	logger.Info("Revoked refresh token family due to logout", "familyID", token.FamilyID)
+	return nil
+}

@@ -113,3 +113,40 @@ func TestRefreshSession_SucceedsAndRevokesOldToken(t *testing.T) {
 		require.Equal(t, *fetchedOldToken.ReplacedByID, fetchedNewToken.ID)
 	})
 }
+
+func TestRevokeSession_Succeeds(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := NewRefreshTokenService(txRunner, 7, NewTokenHasher("abc"), NewRefreshTokenRepo())
+		ctx := context.Background()
+		userIDs := testutil.SeedUsers(tx)
+		token, err := refreshTokenService.NewSession(ctx, userIDs[0], "127.0.0.1")
+		require.NoError(t, err)
+
+		// Act
+		err = refreshTokenService.RevokeSession(ctx, token.Token)
+		require.NoError(t, err)
+
+		// Assert that the token is revoked
+		fetchedToken, err := refreshTokenService.repo.GetRefreshTokenByHash(ctx, txRunner.DB(), token.TokenHash)
+		require.NoError(t, err)
+		require.NotNil(t, fetchedToken)
+		require.True(t, fetchedToken.IsRevoked)
+	})
+}
+
+func TestRevokeSession_NonexistentToken_ReturnsError(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := NewRefreshTokenService(txRunner, 7, NewTokenHasher("abc"), NewRefreshTokenRepo())
+		ctx := context.Background()
+
+		// Act
+		err := refreshTokenService.RevokeSession(ctx, "nonexistenttoken")
+
+		// Assert
+		require.ErrorIs(t, err, ErrInvalidRefreshToken)
+	})
+}

@@ -83,15 +83,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// Set http only cookie with refresh token
-	c.SetCookie(
-		"refresh_token",
+	setRefreshTokenCookie(c,
 		refreshToken.Token,
 		int(refreshToken.ExpiresAt-time.Now().Unix()),
-		"/",
-		"",
-		// TODO: set to true in production
-		false,
-		true,
 	)
 
 	c.JSON(200, response.Success[string]{Data: jwt})
@@ -124,16 +118,49 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie(
-		"refresh_token",
+	setRefreshTokenCookie(c,
 		newRefreshToken.Token,
 		int(newRefreshToken.ExpiresAt-time.Now().Unix()),
+	)
+
+	c.JSON(200, response.Success[string]{Data: jwt})
+}
+
+// Logout godoc
+// @Summary Logout a user
+// @Description Logout a user by revoking their refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Router /auth/logout [post]
+func (h *AuthHandler) Logout(c *gin.Context) {
+	ctx := c.Request.Context()
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(401, response.NewError("missing_refresh_token", "Refresh token cookie is required"))
+		return
+	}
+	err = h.service.Logout(ctx, refreshToken)
+	if err != nil {
+		c.JSON(500, response.NewInternalServerError(err.Error()))
+		return
+	}
+
+	// Clear the refresh token cookie
+	setRefreshTokenCookie(c, "", -1)
+
+	c.JSON(200, response.Ok())
+}
+
+func setRefreshTokenCookie(c *gin.Context, token string, maxAge int) {
+	c.SetCookie(
+		"refresh_token",
+		token,
+		maxAge,
 		"/",
 		"",
 		// TODO: set to true in production
 		false,
 		true,
 	)
-
-	c.JSON(200, response.Success[string]{Data: jwt})
 }
