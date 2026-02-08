@@ -69,7 +69,7 @@ func (s *RefreshTokenService) RefreshSession(ctx context.Context, oldRefreshToke
 		}
 
 		// Token valid, create new token in same family with current as parent
-		newToken, err := s.createChildToken(ctx, oldToken, ipAddress)
+		newToken, err := s.createChildToken(oldToken, ipAddress)
 		if err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func (s *RefreshTokenService) createNewToken(userID, ipAddress string) (*Refresh
 	}, nil
 }
 
-func (s *RefreshTokenService) createChildToken(ctx context.Context, parent *RefreshToken, ipAddress string) (*RefreshToken, error) {
+func (s *RefreshTokenService) createChildToken(parent *RefreshToken, ipAddress string) (*RefreshToken, error) {
 	childToken, err := s.createNewToken(parent.UserID, ipAddress)
 	if err != nil {
 		return nil, err

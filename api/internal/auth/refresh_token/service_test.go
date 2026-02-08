@@ -27,5 +27,6 @@ func TestNewSession(t *testing.T) {
 		require.Equal(t, userIDs[0], token.UserID)
 		require.NotEqual(t, token.Token, token.TokenHash)
 		require.False(t, token.IsRevoked)
+		require.Nil(t, token.ReplacedByID)
 	})
 }
