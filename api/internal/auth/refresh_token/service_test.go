@@ -57,3 +57,19 @@ func TestNewSession_FetchPersistedToken(t *testing.T) {
 		require.Equal(t, token.ExpiresAt, fetchedToken.ExpiresAt)
 	})
 }
+
+func TestRefreshSession_NoExistingToken_ReturnsError(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := NewRefreshTokenService(txRunner, 7, NewTokenHasher("abc"), NewRefreshTokenRepo())
+		ctx := context.Background()
+
+		// Act
+		newToken, err := refreshTokenService.RefreshSession(ctx, "nonexistenttoken", "127.0.0.1")
+
+		// Assert
+		require.ErrorIs(t, err, ErrInvalidRefreshToken)
+		require.Nil(t, newToken)
+	})
+}

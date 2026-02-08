@@ -35,7 +35,7 @@ func (s *RefreshTokenService) NewSession(ctx context.Context, userID string, ipA
 		return nil, err
 	}
 
-	err = s.repo.SaveRefreshToken(ctx, s.txRunner.DB(), refreshToken)
+	err = s.repo.SaveNewRefreshToken(ctx, s.txRunner.DB(), refreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (s *RefreshTokenService) RefreshSession(ctx context.Context, oldRefreshToke
 			return err
 		}
 
-		err = s.repo.SaveRefreshToken(ctx, tx, newToken)
+		err = s.repo.SaveNewRefreshToken(ctx, tx, newToken)
 		if err != nil {
 			return err
 		}

@@ -30,7 +30,7 @@ func (r *RefreshTokenRepo) RevokeRefreshTokensForUser(userID string) error {
 
 // Creates a brand new refresh token that isn't descended from another
 // Hence family_id is omitted
-func (r *RefreshTokenRepo) SaveRefreshToken(
+func (r *RefreshTokenRepo) SaveNewRefreshToken(
 	ctx context.Context,
 	db db.DBTX,
 	token *RefreshToken,
