@@ -20,7 +20,7 @@ type RefreshTokenRow struct {
 	ExpiresAt    time.Time
 	IPAddress    string
 	FamilyID     string
-	IsRevoked    bool
+	RevokedAt    sql.NullTime
 	ReplacedByID sql.NullString
 }
 
@@ -50,13 +50,13 @@ func (r *RefreshTokenRepo) GetRefreshTokenByHash(
 	tokenHash string,
 ) (*RefreshToken, error) {
 	var query = `
-		SELECT id, user_id, token_hash, expires_at, ip_address, family_id, is_revoked, replaced_by_id
+		SELECT id, user_id, token_hash, expires_at, ip_address, family_id, revoked_at, replaced_by_token_id
 		FROM refresh_tokens
 		WHERE token_hash = $1
 	`
 	row := db.QueryRowContext(ctx, query, tokenHash)
 	var tokenRow RefreshTokenRow
-	err := row.Scan(&tokenRow.ID, &tokenRow.UserID, &tokenRow.TokenHash, &tokenRow.ExpiresAt, &tokenRow.IPAddress, &tokenRow.FamilyID, &tokenRow.IsRevoked, &tokenRow.ReplacedByID)
+	err := row.Scan(&tokenRow.ID, &tokenRow.UserID, &tokenRow.TokenHash, &tokenRow.ExpiresAt, &tokenRow.IPAddress, &tokenRow.FamilyID, &tokenRow.RevokedAt, &tokenRow.ReplacedByID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -71,7 +71,7 @@ func (r *RefreshTokenRepo) GetRefreshTokenByHash(
 		ExpiresAt: tokenRow.ExpiresAt.Unix(),
 		IPAddress: tokenRow.IPAddress,
 		FamilyID:  tokenRow.FamilyID,
-		IsRevoked: tokenRow.IsRevoked,
+		IsRevoked: tokenRow.RevokedAt.Valid,
 	}, nil
 }
 
@@ -82,7 +82,7 @@ func (r *RefreshTokenRepo) RevokeRefreshTokensForFamily(
 ) error {
 	var query = `
 		UPDATE refresh_tokens
-		SET is_revoked = true
+		SET revoked_at = now()
 		WHERE family_id = $1
 	`
 	_, err := db.ExecContext(ctx, query, familyID)
