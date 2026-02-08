@@ -42,6 +42,22 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/auth/refresh": {
+            "post": {
+                "description": "Refresh JWT token using refresh token cookie",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh JWT token",
+                "responses": {}
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Register a new user with email and password",
