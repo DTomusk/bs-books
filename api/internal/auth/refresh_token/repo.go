@@ -44,6 +44,28 @@ func (r *RefreshTokenRepo) SaveNewRefreshToken(
 	return err
 }
 
+func (r *RefreshTokenRepo) SaveRefreshToken(ctx context.Context, db db.DBTX, token *RefreshToken) error {
+	var query = `
+		INSERT INTO refresh_tokens
+		(id, user_id, token_hash, expires_at, ip_address, family_id, revoked_at, replaced_by_token_id)
+		VALUES ($1, $2, $3, to_timestamp($4), $5, $6, to_timestamp($7), $8)
+	`
+	var revokedAt interface{}
+	if token.IsRevoked {
+		revokedAt = time.Unix(token.ExpiresAt, 0)
+	} else {
+		revokedAt = nil
+	}
+	var replacedByID interface{}
+	if token.ReplacedByID != nil {
+		replacedByID = *token.ReplacedByID
+	} else {
+		replacedByID = nil
+	}
+	_, err := db.ExecContext(ctx, query, token.ID, token.UserID, token.TokenHash, token.ExpiresAt, token.IPAddress, token.FamilyID, revokedAt, replacedByID)
+	return err
+}
+
 func (r *RefreshTokenRepo) GetRefreshTokenByHash(
 	ctx context.Context,
 	db db.DBTX,
@@ -72,6 +94,12 @@ func (r *RefreshTokenRepo) GetRefreshTokenByHash(
 		IPAddress: tokenRow.IPAddress,
 		FamilyID:  tokenRow.FamilyID,
 		IsRevoked: tokenRow.RevokedAt.Valid,
+		ReplacedByID: func() *string {
+			if tokenRow.ReplacedByID.Valid {
+				return &tokenRow.ReplacedByID.String
+			}
+			return nil
+		}(),
 	}, nil
 }
 
@@ -97,7 +125,7 @@ func (r *RefreshTokenRepo) SetReplacedBy(
 ) error {
 	var query = `
 		UPDATE refresh_tokens
-		SET replaced_by_id = $1
+		SET replaced_by_token_id = $1
 		WHERE id = $2
 	`
 	_, err := db.ExecContext(ctx, query, newTokenID, oldTokenID)

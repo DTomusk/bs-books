@@ -2,6 +2,7 @@ package refresh_token
 
 import (
 	"bs-books-api/internal/db"
+	"bs-books-api/internal/logging"
 	"context"
 	"crypto/rand"
 	"database/sql"
@@ -30,13 +31,17 @@ func NewRefreshTokenService(txRunner db.TxRunner, tokenExpiryDays int, hasher *T
 // Called at login
 func (s *RefreshTokenService) NewSession(ctx context.Context, userID string, ipAddress string) (*RefreshToken, error) {
 	// Create a new refresh token
+	logger := logging.FromContext(ctx)
+	logger.Info("Creating new refresh token for user", "userID", userID, "ipAddress", ipAddress)
 	refreshToken, err := s.createNewToken(userID, ipAddress)
 	if err != nil {
+		logger.Error("Failed to create new refresh token", "error", err)
 		return nil, err
 	}
 
 	err = s.repo.SaveNewRefreshToken(ctx, s.txRunner.DB(), refreshToken)
 	if err != nil {
+		logger.Error("Failed to save new refresh token", "error", err)
 		return nil, err
 	}
 
@@ -44,15 +49,20 @@ func (s *RefreshTokenService) NewSession(ctx context.Context, userID string, ipA
 }
 
 func (s *RefreshTokenService) RefreshSession(ctx context.Context, oldRefreshToken string, ipAddress string) (*RefreshToken, error) {
+	logger := logging.FromContext(ctx)
+	logger.Info("Refreshing session with old refresh token", "oldRefreshToken", oldRefreshToken, "ipAddress", ipAddress)
+
 	// Hash token
 	tokenHash := s.hasher.Hash(oldRefreshToken)
 
 	// Get token from DB by hash
 	oldToken, err := s.repo.GetRefreshTokenByHash(ctx, s.txRunner.DB(), tokenHash)
 	if err != nil {
+		logger.Error("Failed to fetch refresh token by hash", "error", err)
 		return nil, err
 	}
 	if oldToken == nil {
+		logger.Warn("No refresh token found for hash", "tokenHash", tokenHash)
 		return nil, ErrInvalidRefreshToken
 	}
 
@@ -61,30 +71,47 @@ func (s *RefreshTokenService) RefreshSession(ctx context.Context, oldRefreshToke
 	err = s.txRunner.WithTx(ctx, func(tx *sql.Tx) error {
 		// If token is expired or revoked, revoke entire family and return error
 		if oldToken.IsRevoked || oldToken.ExpiresAt < time.Now().Unix() {
+			logger.Warn("Refresh token is expired or revoked, revoking entire family", "tokenID", oldToken.ID, "familyID", oldToken.FamilyID)
 			err := s.repo.RevokeRefreshTokensForFamily(ctx, tx, oldToken.FamilyID)
 			if err != nil {
+				logger.Error("Failed to revoke refresh token family", "familyID", oldToken.FamilyID, "error", err)
 				return err
 			}
+			logger.Info("Revoked refresh token family due to expired/revoked token usage", "familyID", oldToken.FamilyID)
 			return ErrInvalidRefreshToken
 		}
 
-		// Token valid, create new token in same family with current as parent
-		newToken, err := s.createChildToken(oldToken, ipAddress)
+		err = s.repo.RevokeRefreshTokensForFamily(ctx, tx, oldToken.FamilyID)
 		if err != nil {
+			logger.Error("Failed to revoke refresh token family", "familyID", oldToken.FamilyID, "error", err)
+			return err
+		}
+		logger.Info("Revoked refresh token family due to refresh", "familyID", oldToken.FamilyID)
+
+		// Token valid, create new token in same family with current as parent
+		newToken, err = s.createChildToken(oldToken, ipAddress)
+		if err != nil {
+			logger.Error("Failed to create child refresh token", "error", err)
+			return err
+		}
+
+		err = s.repo.SaveRefreshToken(ctx, tx, newToken)
+		if err != nil {
+			logger.Error("Failed to save new refresh token", "error", err)
 			return err
 		}
 
 		err = s.repo.SetReplacedBy(ctx, tx, oldToken.ID, newToken.ID)
 		if err != nil {
-			return err
-		}
-
-		err = s.repo.SaveNewRefreshToken(ctx, tx, newToken)
-		if err != nil {
+			logger.Error("Failed to set replaced_by for old refresh token", "oldTokenID", oldToken.ID, "newTokenID", newToken.ID, "error", err)
 			return err
 		}
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return newToken, nil
 }

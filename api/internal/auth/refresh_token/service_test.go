@@ -73,3 +73,43 @@ func TestRefreshSession_NoExistingToken_ReturnsError(t *testing.T) {
 		require.Nil(t, newToken)
 	})
 }
+
+func TestRefreshSession_SucceedsAndRevokesOldToken(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// We start by making an initial session, then we refresh using the resulting token
+		// Arrange
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := NewRefreshTokenService(txRunner, 7, NewTokenHasher("abc"), NewRefreshTokenRepo())
+		ctx := context.Background()
+		userIDs := testutil.SeedUsers(tx)
+		oldToken, err := refreshTokenService.NewSession(ctx, userIDs[0], "127.0.0.1")
+		require.NoError(t, err)
+
+		// Act
+		newToken, err := refreshTokenService.RefreshSession(ctx, oldToken.Token, "127.0.0.1")
+		require.NoError(t, err)
+		require.NotNil(t, newToken)
+		require.NotEqual(t, oldToken.Token, newToken.Token)
+
+		// Assert that the old token is revoked
+		fetchedOldToken, err := refreshTokenService.repo.GetRefreshTokenByHash(ctx, txRunner.DB(), oldToken.TokenHash)
+		require.NoError(t, err)
+		require.NotNil(t, fetchedOldToken)
+		require.True(t, fetchedOldToken.IsRevoked)
+
+		// Assert that the new token is valid and has correct properties
+		fetchedNewToken, err := refreshTokenService.repo.GetRefreshTokenByHash(ctx, txRunner.DB(), newToken.TokenHash)
+		require.NoError(t, err)
+		require.NotNil(t, fetchedNewToken)
+		require.Equal(t, newToken.TokenHash, fetchedNewToken.TokenHash)
+		require.Equal(t, newToken.UserID, fetchedNewToken.UserID)
+		require.Equal(t, newToken.IPAddress, fetchedNewToken.IPAddress)
+		require.Equal(t, newToken.FamilyID, fetchedNewToken.FamilyID)
+		require.Equal(t, newToken.ExpiresAt, fetchedNewToken.ExpiresAt)
+		require.False(t, fetchedNewToken.IsRevoked)
+
+		// Assert that they're in the same family and old token is marked as parent of new token
+		require.Equal(t, fetchedOldToken.FamilyID, fetchedNewToken.FamilyID)
+		require.Equal(t, *fetchedOldToken.ReplacedByID, fetchedNewToken.ID)
+	})
+}

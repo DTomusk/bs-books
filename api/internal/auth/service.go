@@ -94,6 +94,13 @@ func (s *AuthService) Login(ctx context.Context, email, password string, ipAddre
 }
 
 func (s *AuthService) RefreshToken(ctx context.Context, oldRefreshToken string, ipAddress string) (string, *refresh_token.RefreshToken, error) {
-
-	return "", nil, nil
+	newRefreshToken, err := s.refreshTokenService.RefreshSession(ctx, oldRefreshToken, ipAddress)
+	if err != nil {
+		return "", nil, err
+	}
+	newJWT, err := s.jwtService.GenerateJWT(newRefreshToken.UserID)
+	if err != nil {
+		return "", nil, err
+	}
+	return newJWT, newRefreshToken, nil
 }
