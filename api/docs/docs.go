@@ -42,6 +42,38 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/auth/logout": {
+            "post": {
+                "description": "Logout a user by revoking their refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout a user",
+                "responses": {}
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Refresh JWT token using refresh token cookie",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh JWT token",
+                "responses": {}
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Register a new user with email and password",

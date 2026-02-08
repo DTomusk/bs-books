@@ -2,6 +2,7 @@ package main
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/authors"
 	"bs-books-api/internal/books"
 	"bs-books-api/internal/books/extraction"
@@ -91,7 +92,8 @@ func main() {
 	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
-	authService := auth.NewAuthService(database, userService, jwtService)
+	refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, cfg.REFRESH_TOKEN_EXPIRY_DAYS, refresh_token.NewTokenHasher(cfg.REFRESH_TOKEN_HASH_SALT), refresh_token.NewRefreshTokenRepo())
+	authService := auth.NewAuthService(database, userService, jwtService, refreshTokenService)
 	authHandler := auth.NewAuthHandler(authService)
 
 	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)

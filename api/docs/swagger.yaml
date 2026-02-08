@@ -183,6 +183,28 @@ paths:
       summary: Login a user
       tags:
       - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout a user by revoking their refresh token
+      produces:
+      - application/json
+      responses: {}
+      summary: Logout a user
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh JWT token using refresh token cookie
+      produces:
+      - application/json
+      responses: {}
+      summary: Refresh JWT token
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:
