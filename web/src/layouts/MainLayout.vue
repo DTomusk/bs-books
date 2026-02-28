@@ -17,9 +17,12 @@
           />
           <div v-else style="display: flex; align-items: center">
             <div class="linksContainer text-grey">
-              <a @click="notImplemented">Home</a>
-              <a @click="notImplemented">Explore</a>
-              <a @click="notImplemented">About Us</a>
+              <a
+                v-for="link in ['Home', 'Explore', 'About Us']"
+                :key="link"
+                @click="notImplemented"
+                >{{ link }}</a
+              >
             </div>
             <q-input v-model="search" standout rounded dense bg-color="grey-8">
               <template v-slot:append>
@@ -49,7 +52,12 @@
 
     <q-footer class="bg-dark q-pt-lg">
       <div class="footerLinks">
-        <p v-for="link in ['About', 'FAQs', 'Contact Us', 'Careers']" :key="link" class="hoverable">
+        <p
+          v-for="link in ['About', 'FAQs', 'Contact Us', 'Careers']"
+          :key="link"
+          @click="notImplemented"
+          class="hoverable"
+        >
           {{ link }}
         </p>
       </div>
@@ -57,6 +65,7 @@
         <q-icon
           v-for="social in ['fa-instagram', 'fa-twitter', 'fa-facebook', 'fa-youtube']"
           :key="social"
+          @click="notImplemented"
           :name="'fa-brands ' + social"
           size="x-large"
           class="hoverable"
