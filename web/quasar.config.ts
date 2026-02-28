@@ -14,7 +14,7 @@ export default defineConfig((/* ctx */) => {
     boot: ['axios'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
-    css: ['app.scss'],
+    css: ['app.sass'],
 
     // https://github.com/quasarframework/quasar/tree/dev/extras
     extras: [
@@ -60,7 +60,13 @@ export default defineConfig((/* ctx */) => {
       // distDir
 
       // extendViteConf (viteConf) {},
-      // viteVuePluginOptions: {},
+      viteVuePluginOptions: {
+        template: {
+          compilerOptions: {
+            isCustomElement: (tag: string) => tag === 'lord-icon',
+          },
+        },
+      },
 
       vitePlugins: [
         [
@@ -98,7 +104,7 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: ['Screen'],
+      plugins: ['Screen', 'Notify'],
     },
 
     // animations: 'all', // --- includes all animations

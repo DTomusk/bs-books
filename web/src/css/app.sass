@@ -1,0 +1,49 @@
+// Typography
+h1
+  font-size: clamp(1.9rem, 5vw, 4.25rem)
+  line-height: 1.05
+
+h2
+  font-size: clamp(1.5rem, 4.5vw, 3.75rem)
+  line-height: 1.1
+
+h3 
+  font-size: clamp(1.2rem, 3.5vw, 2.5rem)
+  line-height: 1.15
+
+h4 
+  font-size: clamp(1.05rem, 2.5vw, 1.5rem)
+  line-height: 1.2
+
+// Layout
+.flex-centre-col 
+  display: flex
+  align-items: center
+  flex-direction: column
+  justify-content: center
+
+.flex-centre-row 
+  display: flex
+  gap: 2rem
+  justify-content: center
+
+.flex-left 
+  display: flex
+  justify-content: start
+
+// Lists
+ul li::marker
+  color: $accent
+  font-size: large
+
+// Misc
+.hoverable:hover, a:hover
+  cursor: pointer
+
+.no-select
+  -webkit-touch-callout: none
+  -webkit-user-select: none
+  -khtml-user-select: none 
+  -moz-user-select: none
+  -ms-user-select: none
+  user-select: none
