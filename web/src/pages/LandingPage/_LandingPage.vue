@@ -75,10 +75,8 @@ const featuredBooks: Book[] = [
 ];
 
 function scrollToLearnMore() {
-  console.log('scroll');
   const el = howItWorksComp.value?.howItWorksEl;
   if (!el) return;
-  console.log('scrollhere');
 
   const scrollTarget = getScrollTarget(el);
   // -60 gives padding to header which is scrolled to so it isn't up against top of the screen
