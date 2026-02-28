@@ -2,16 +2,25 @@ package main
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/auth/refresh_token"
+	"bs-books-api/internal/authors"
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/books/extraction"
+	"bs-books-api/internal/books/search"
 	"bs-books-api/internal/config"
+	"bs-books-api/internal/content_moderation"
+	"bs-books-api/internal/db"
 	"bs-books-api/internal/delivery"
+	"bs-books-api/internal/events"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/queries"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/users"
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -39,14 +48,32 @@ func main() {
 		return
 	}
 
+	logger := logging.New(cfg.ENV)
+	slog.SetDefault(logger)
+
+	slog.Info("Configuration loaded", "env", cfg.ENV)
+
 	// Connect to and ping database on startup
-	db, err := sql.Open("postgres", cfg.DB_URL)
+	database, err := sql.Open("postgres", cfg.DB_URL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		slog.Error("Failed to connect to database", "error", err)
+		return
 	}
 
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
+	if err := database.Ping(); err != nil {
+		slog.Error("Failed to ping database", "error", err)
+		return
+	}
+
+	slog.Info("Connected to database")
+
+	externalBooksHTTPClient := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        50,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     60 * time.Second,
+		},
 	}
 
 	ctx, stop := signal.NotifyContext(
@@ -57,27 +84,43 @@ func main() {
 	defer stop()
 
 	// DI for routes
-	userRepo := users.NewUserRepo()
-	userService := users.NewUserService(db, userRepo)
+	txRunner := db.NewDBTxRunner(database)
+
+	eventService := events.NewEventService(txRunner, events.NewEventRepo(), cfg.EVENTS_MAX_RETRIES)
+
+	userService := users.NewUserService(database, users.NewUserRepo())
 	userHandler := users.NewUserHandler(userService)
 
 	jwtService := auth.NewJWTService(cfg.JWT_SECRET_KEY, cfg.JWT_EXPIRATION_MINUTES)
-	authService := auth.NewAuthService(db, userService, jwtService)
+	refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, cfg.REFRESH_TOKEN_EXPIRY_DAYS, refresh_token.NewTokenHasher(cfg.REFRESH_TOKEN_HASH_SALT), refresh_token.NewRefreshTokenRepo())
+	authService := auth.NewAuthService(database, userService, jwtService, refreshTokenService)
 	authHandler := auth.NewAuthHandler(authService)
 
-	bookReader := queries.NewBookReader(db)
+	authorService := authors.NewAuthorsService(database, authors.NewAuthorsRepo(), cfg.AUTHOR_SIMILARITY_THRESHOLD)
+	bookReader := queries.NewBookReader(database)
+	bookService := books.NewBooksService(txRunner, books.NewBooksRepo())
+	bookExtractionService := extraction.NewBookExtractionService(database, extraction.NewGoogleBooksProvider(externalBooksHTTPClient, cfg.GOOGLE_BOOKS_API_KEY), authorService)
+	bookSearchService := search.NewBookSearchService(database, bookReader, bookService, search.NewBookSearchRepo(), bookExtractionService)
+	searchHandler := search.NewSearchHandler(bookSearchService)
 	bookHandler := books.NewBookHandler(bookReader)
 
-	ratingRepo := ratings.NewRatingRepo()
-	ratingService := ratings.NewRatingService(db, ratingRepo)
+	reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), database, cfg.REVIEW_VISIBILITY_THRESHOLD)
+	reviewReader := queries.NewReviewReader(database)
+	reviewHandler := reviews.NewReviewHandler(reviewReader)
+	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
+
+	contentModerationHandler := content_moderation.NewContentModerationHandler(content_moderation.NewContentModerationService(database, content_moderation.NewContentModerationRepo(), eventService, reviewService, userService))
 
 	r := delivery.NewRouter(
 		authHandler,
-		bookHandler,
+		searchHandler,
 		ratingHandler,
 		userHandler,
+		reviewHandler,
 		jwtService,
+		bookHandler,
+		contentModerationHandler,
 	)
 
 	srv := &http.Server{
@@ -87,22 +130,23 @@ func main() {
 
 	// Run server in goroutine
 	go func() {
-		log.Printf("Starting server on port \n 8080")
+		slog.Info("Starting server on port", "port", 8080)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			slog.Error("listen", "error", err)
+			return
 		}
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server
 	<-ctx.Done()
-	log.Println("Shutting down server...")
+	slog.Info("Shutting down server...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 
-	log.Println("Server exiting")
+	slog.Info("Server exiting")
 }

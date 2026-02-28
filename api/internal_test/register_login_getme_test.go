@@ -2,6 +2,7 @@ package internal_test
 
 import (
 	"bs-books-api/internal/auth"
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/delivery/response"
 	"bs-books-api/internal/testutil"
 	"bs-books-api/internal/users"
@@ -46,16 +47,19 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		userRepo := users.NewUserRepo()
 		userService := users.NewUserService(tx, userRepo)
 		userHandler := users.NewUserHandler(userService)
-		authService := auth.NewAuthService(tx, userService, jwtService)
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
+		authService := auth.NewAuthService(tx, userService, jwtService, refreshTokenService)
 		router := setupAuthRouter(jwtService, authService, userHandler)
 
 		// 1. Register
-		body := []byte(`{
+		registerBody := []byte(`{
+		"username": "testuser",
 		"email": "test@example.com",
 		"password": "securepassword"
 		}`)
 
-		registerReq := jsonRequest("POST", "/api/auth/register", body)
+		registerReq := jsonRequest("POST", "/api/auth/register", registerBody)
 		registerW := httptest.NewRecorder()
 
 		router.ServeHTTP(registerW, registerReq)
@@ -63,7 +67,11 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 		require.Equal(t, 201, registerW.Code)
 
 		// 2. Login
-		loginReq := jsonRequest("POST", "/api/auth/login", body)
+		loginBody := []byte(`{
+		"email": "test@example.com",	
+		"password": "securepassword"
+		}`)
+		loginReq := jsonRequest("POST", "/api/auth/login", loginBody)
 		loginW := httptest.NewRecorder()
 
 		router.ServeHTTP(loginW, loginReq)
@@ -96,9 +104,11 @@ func TestRegisterLoginMe_Success(t *testing.T) {
 func TestGetMe_NoAuthHeader(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		router := setupAuthRouter(
 			jwtService,
-			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService),
+			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),
 			users.NewUserHandler(users.NewUserService(tx, users.NewUserRepo())),
 		)
 		meReq := jsonRequest("GET", "/api/users/me", nil)
@@ -113,9 +123,11 @@ func TestGetMe_NoAuthHeader(t *testing.T) {
 func TestGetMe_InvalidToken(t *testing.T) {
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		jwtService := auth.NewJWTService("test_secret_key", 15)
+		txRunner := testutil.NewTestTxRunner(tx)
+		refreshTokenService := refresh_token.NewRefreshTokenService(txRunner, 7, refresh_token.NewTokenHasher("abc"), refresh_token.NewRefreshTokenRepo())
 		router := setupAuthRouter(
 			jwtService,
-			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService),
+			auth.NewAuthService(tx, users.NewUserService(tx, users.NewUserRepo()), jwtService, refreshTokenService),
 			users.NewUserHandler(users.NewUserService(tx, users.NewUserRepo())),
 		)
 		meReq := jsonRequest("GET", "/api/users/me", nil)

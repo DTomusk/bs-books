@@ -5,11 +5,12 @@ import "github.com/google/uuid"
 type Rating struct {
 	ID         string
 	BookID     string
+	UserID     string
 	HeartScore float64
 	PooScore   float64
 }
 
-func newRating(bookID string, heartScore, pooScore float64) (*Rating, error) {
+func newRating(bookID, userID string, heartScore, pooScore float64) (*Rating, error) {
 	if heartScore < 0 || pooScore < 0 {
 		return nil, ErrNegativeScore
 	}
@@ -21,6 +22,7 @@ func newRating(bookID string, heartScore, pooScore float64) (*Rating, error) {
 	return &Rating{
 		ID:         uuid.New().String(),
 		BookID:     bookID,
+		UserID:     userID,
 		HeartScore: heartScore,
 		PooScore:   pooScore,
 	}, nil

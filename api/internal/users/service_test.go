@@ -5,6 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetUserByEmail_UserExists(t *testing.T) {
@@ -14,20 +16,15 @@ func TestGetUserByEmail_UserExists(t *testing.T) {
 		userService := NewUserService(tx, userRepo)
 		ctx := context.Background()
 
-		userService.CreateUser("e@mail.com", "beep boop boop", ctx)
+		userService.CreateUser("username", "e@mail.com", "beep boop boop", ctx)
 
 		// Act
 		retrieved_user, err := userService.GetUserByEmail("e@mail.com", ctx)
 
 		// Assert
-		if err != nil {
-			t.Fatalf("expected no error, got %v", err)
-		}
-		if retrieved_user == nil {
-			t.Fatal("expected user, got nil")
-		}
-		if retrieved_user.Email != "e@mail.com" {
-			t.Fatalf("expected email to be 'e@mail.com', got %s", retrieved_user.Email)
-		}
+		require.NoError(t, err)
+		require.NotNil(t, retrieved_user)
+		require.Equal(t, "e@mail.com", retrieved_user.Email)
+		require.Equal(t, "username", retrieved_user.Username)
 	})
 }

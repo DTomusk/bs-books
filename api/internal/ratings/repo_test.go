@@ -13,13 +13,15 @@ func TestRepoCreateRating(t *testing.T) {
 
 	testutil.WithTx(t, func(tx *sql.Tx) {
 		testutil.SeedAuthors(tx)
-		testutil.SeedBooks(tx)
+		bookIDs := testutil.SeedBooks(tx)
+		userIDs := testutil.SeedUsers(tx)
 
 		ctx := context.Background()
 
 		// Act
 		rating, err := newRating(
-			"23681e21-08d4-43e1-b0b6-8d6f75a9b8b3",
+			bookIDs[0],
+			userIDs[0],
 			4.5,
 			2.0,
 		)

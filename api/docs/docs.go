@@ -42,6 +42,38 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/auth/logout": {
+            "post": {
+                "description": "Logout a user by revoking their refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout a user",
+                "responses": {}
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Refresh JWT token using refresh token cookie",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh JWT token",
+                "responses": {}
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Register a new user with email and password",
@@ -82,9 +114,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/books": {
+        "/books/search": {
             "get": {
-                "description": "Get a list of all books",
+                "description": "Search for books by title",
                 "consumes": [
                     "application/json"
                 ],
@@ -92,17 +124,205 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "books"
+                    "Books"
                 ],
-                "summary": "Get list of books",
+                "summary": "Search Books",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/books.BookListResponse"
-                            }
+                            "$ref": "#/definitions/search.BookSearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/{id}": {
+            "get": {
+                "description": "Retrieve book details by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Get Book by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/books.BookDetailsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/{id}/reviews": {
+            "get": {
+                "description": "Retrieve all reviews associated with a specific book",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Get reviews for a book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/reviews.ReviewListingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/moderation/report": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Report a review or user for inappropriate content or behavior",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content Moderation"
+                ],
+                "summary": "Report inappropriate content",
+                "parameters": [
+                    {
+                        "description": "Report content request",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/content_moderation.ReportContentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -110,6 +330,11 @@ const docTemplate = `{
         },
         "/ratings": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new rating for a book",
                 "consumes": [
                     "application/json"
@@ -200,7 +425,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "email",
-                "password"
+                "password",
+                "username"
             ],
             "properties": {
                 "email": {
@@ -208,31 +434,64 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
-        "books.BookListResponse": {
-            "description": "Response containing a list of books",
+        "books.AuthorSearchItem": {
             "type": "object",
             "properties": {
-                "data": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "books.BookDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "authors": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/queries.BookResponse"
+                        "$ref": "#/definitions/books.AuthorSearchItem"
                     }
-                }
-            }
-        },
-        "queries.BookResponse": {
-            "type": "object",
-            "properties": {
-                "author_id": {
-                    "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
+                "synopsis": {
+                    "type": "string"
+                },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "content_moderation.ReportContentRequest": {
+            "type": "object",
+            "required": [
+                "content_id",
+                "content_type",
+                "reason"
+            ],
+            "properties": {
+                "content_id": {
+                    "type": "string"
+                },
+                "content_type": {
+                    "type": "string",
+                    "enum": [
+                        "review"
+                    ]
+                },
+                "reason": {
                     "type": "string"
                 }
             }
@@ -248,6 +507,9 @@ const docTemplate = `{
                 },
                 "poo_score": {
                     "type": "number"
+                },
+                "review": {
+                    "type": "string"
                 }
             }
         },
@@ -270,6 +532,108 @@ const docTemplate = `{
                     "$ref": "#/definitions/response.Error"
                 },
                 "meta": {}
+            }
+        },
+        "response.PageMeta": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_items": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "reviews.ReviewListingItem": {
+            "type": "object",
+            "properties": {
+                "heart_score": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "poo_score": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "reviews.ReviewListingResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/reviews.ReviewListingItem"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/response.PageMeta"
+                }
+            }
+        },
+        "search.AuthorSearchItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "search.BookSearchItem": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/search.AuthorSearchItem"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "similarity": {
+                    "type": "number"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "search.BookSearchResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/search.BookSearchItem"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/response.PageMeta"
+                }
             }
         },
         "users.GetMeResponse": {

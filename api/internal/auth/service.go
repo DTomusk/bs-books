@@ -1,31 +1,38 @@
 package auth
 
 import (
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/db"
 	"bs-books-api/internal/users"
 	"context"
 )
 
 type AuthService struct {
-	db          db.DBTX
-	userService *users.UserService
-	jwtService  *JWTService
+	db                  db.DBTX
+	userService         *users.UserService
+	jwtService          *JWTService
+	refreshTokenService *refresh_token.RefreshTokenService
 }
 
-func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *JWTService) *AuthService {
+func NewAuthService(db db.DBTX, userService *users.UserService, jwtService *JWTService, refreshTokenService *refresh_token.RefreshTokenService) *AuthService {
 	return &AuthService{
-		db:          db,
-		userService: userService,
-		jwtService:  jwtService,
+		db:                  db,
+		userService:         userService,
+		jwtService:          jwtService,
+		refreshTokenService: refreshTokenService,
 	}
 }
 
-func (s *AuthService) Register(ctx context.Context, email, password string) error {
+func (s *AuthService) Register(ctx context.Context, username, email, password string) error {
 	if err := validateEmail(email); err != nil {
 		return err
 	}
 
 	if err := validatePassword(password); err != nil {
+		return err
+	}
+
+	if err := validateUsername(username); err != nil {
 		return err
 	}
 
@@ -38,36 +45,66 @@ func (s *AuthService) Register(ctx context.Context, email, password string) erro
 		return ErrEmailAlreadyInUse
 	}
 
+	existing_user, err = s.userService.GetUserByUsername(username, ctx)
+	if err != nil {
+		return err
+	}
+
+	if existing_user != nil {
+		return ErrUsernameAlreadyInUse
+	}
+
 	password_hash, err := hashPassword(password)
 
 	if err != nil {
 		return err
 	}
 
-	err = s.userService.CreateUser(email, password_hash, ctx)
+	err = s.userService.CreateUser(username, email, password_hash, ctx)
 
 	return err
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {
+func (s *AuthService) Login(ctx context.Context, email, password string, ipAddress string) (string, *refresh_token.RefreshToken, error) {
 	user, err := s.userService.GetUserByEmail(email, ctx)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	if user == nil {
-		return "", ErrInvalidCredentials
+		return "", nil, ErrInvalidCredentials
 	}
 
 	if err := comparePassword(user.PasswordHash, password); err != nil {
-		return "", ErrInvalidCredentials
+		return "", nil, ErrInvalidCredentials
 	}
 
-	// TODO: generate and return JWT token
 	token, err := s.jwtService.GenerateJWT(user.ID)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return token, nil
+	refreshToken, err := s.refreshTokenService.NewSession(ctx, user.ID, ipAddress)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	return token, refreshToken, nil
+}
+
+func (s *AuthService) RefreshToken(ctx context.Context, oldRefreshToken string, ipAddress string) (string, *refresh_token.RefreshToken, error) {
+	newRefreshToken, err := s.refreshTokenService.RefreshSession(ctx, oldRefreshToken, ipAddress)
+	if err != nil {
+		return "", nil, err
+	}
+	newJWT, err := s.jwtService.GenerateJWT(newRefreshToken.UserID)
+	if err != nil {
+		return "", nil, err
+	}
+	return newJWT, newRefreshToken, nil
+}
+
+func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
+	return s.refreshTokenService.RevokeSession(ctx, refreshToken)
 }

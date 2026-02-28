@@ -1,0 +1,164 @@
+package content_moderation
+
+import (
+	"bs-books-api/internal/events"
+	"bs-books-api/internal/reviews"
+	"bs-books-api/internal/testutil"
+	"bs-books-api/internal/users"
+	"context"
+	"database/sql"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestInvalidContentType_ReturnsError(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		service := NewContentModerationService(tx, nil, nil, nil, nil)
+		ctx := context.Background()
+
+		// Act
+		err := service.ReportContent(ctx, "some-id", "invalid-type", "reason", "user-id")
+
+		// Assert
+		require.NotNil(t, err)
+		require.Equal(t, ErrInvalidContentType, err)
+	})
+}
+
+func TestReportReview_ReviewDoesNotExist_ReturnsError(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, reviewService, nil)
+
+		// Act
+		err := service.ReportContent(ctx, "non-existent-review-id", Review, "Inappropriate content", "user-id")
+
+		// Assert
+		require.NotNil(t, err)
+		require.Equal(t, ErrContentElementDoesntExist, err)
+	})
+}
+
+func TestReportReview_Success(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		// DI
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, reviewService, nil)
+
+		// Seed data
+		testutil.SeedAuthors(tx)
+		bookIDs := testutil.SeedBooks(tx)
+		userIDs := testutil.SeedUsers(tx)
+		ids := testutil.SeedRatingsAndReviews(tx, bookIDs[0], userIDs[0], 4.5, 1.0)
+
+		// Act
+		err := service.ReportContent(ctx, ids[1], Review, "Inappropriate content", userIDs[0])
+
+		// Assert
+		require.Nil(t, err)
+
+		// Dequeue event to check it was raised successfully
+		event, err := eventService.DequeueEvent(ctx)
+		require.Nil(t, err)
+		require.NotNil(t, event)
+		require.Equal(t, EventReviewReported, event.Type)
+		require.Equal(t, ids[1], event.AggregateID)
+	})
+}
+
+func TestReportReview_DuplicateReport_Errors(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		// DI
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		reviewService := reviews.NewReviewService(reviews.NewReviewRepo(), tx, 5)
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, reviewService, nil)
+
+		// Seed data
+		testutil.SeedAuthors(tx)
+		bookIDs := testutil.SeedBooks(tx)
+		userIDs := testutil.SeedUsers(tx)
+		ids := testutil.SeedRatingsAndReviews(tx, bookIDs[0], userIDs[0], 4.5, 1.0)
+
+		// Act
+		err := service.ReportContent(ctx, ids[1], Review, "Inappropriate content", userIDs[0])
+
+		// Assert
+		require.Nil(t, err)
+
+		// Dequeue event to check it was raised successfully
+		event, err := eventService.DequeueEvent(ctx)
+		require.Nil(t, err)
+		require.NotNil(t, event)
+		require.Equal(t, EventReviewReported, event.Type)
+		require.Equal(t, ids[1], event.AggregateID)
+
+		// Act 2 - attempt to report same content again by same user
+		err = service.ReportContent(ctx, ids[1], Review, "Inappropriate content", userIDs[0])
+		require.NotNil(t, err)
+		require.Equal(t, ErrAlreadyReported, err)
+	})
+}
+
+func TestReportUser_UserDoesNotExist_ReturnsError(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		userService := users.NewUserService(tx, users.NewUserRepo())
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, nil, userService)
+
+		// Act
+		err := service.ReportContent(ctx, "non-existent-user-id", User, "Offensive username", "user-id")
+
+		// Assert
+		require.NotNil(t, err)
+		require.Equal(t, ErrContentElementDoesntExist, err)
+	})
+}
+
+func TestReportUser_Success(t *testing.T) {
+	testutil.WithTx(t, func(tx *sql.Tx) {
+		// Arrange
+		// DI
+		ctx := context.Background()
+		txRunner := testutil.NewTestTxRunner(tx)
+		userService := users.NewUserService(tx, users.NewUserRepo())
+		repo := NewContentModerationRepo()
+		eventService := events.NewEventService(txRunner, events.NewEventRepo(), 5)
+		service := NewContentModerationService(tx, repo, eventService, nil, userService)
+
+		// Seed data
+		userIDs := testutil.SeedUsers(tx)
+
+		// Act
+		err := service.ReportContent(ctx, userIDs[1], User, "Inappropriate content", userIDs[0])
+
+		// Assert
+		require.Nil(t, err)
+
+		// Dequeue event to check it was raised successfully
+		event, err := eventService.DequeueEvent(ctx)
+		require.Nil(t, err)
+		require.NotNil(t, event)
+		require.Equal(t, EventUserReported, event.Type)
+		require.Equal(t, userIDs[1], event.AggregateID)
+	})
+}

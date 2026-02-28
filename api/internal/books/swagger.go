@@ -1,9 +1,14 @@
 package books
 
-import "bs-books-api/internal/queries"
+type BookDetailsResponse struct {
+	ID       string             `json:"id"`
+	Title    string             `json:"title"`
+	ImageURL string             `json:"image_url"`
+	Synopsis string             `json:"synopsis"`
+	Authors  []AuthorSearchItem `json:"authors"`
+}
 
-// BookListResponse godoc
-// @Description Response containing a list of books
-type BookListResponse struct {
-	Data []*queries.BookResponse `json:"data"`
+type AuthorSearchItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }

@@ -3,7 +3,11 @@ package delivery
 import (
 	"bs-books-api/internal/auth"
 	"bs-books-api/internal/books"
+	"bs-books-api/internal/books/search"
+	"bs-books-api/internal/content_moderation"
+	"bs-books-api/internal/logging"
 	"bs-books-api/internal/ratings"
+	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/users"
 	"net/http"
 
@@ -14,13 +18,16 @@ import (
 
 func NewRouter(
 	authHandler *auth.AuthHandler,
-	bookHandler *books.BookHandler,
+	bookSearchHandler *search.BookSearchHandler,
 	ratingHandler *ratings.RatingHandler,
 	userHandler *users.UserHandler,
+	reviewHandler *reviews.ReviewHandler,
 	jwtService *auth.JWTService,
+	bookHandler *books.BookHandler,
+	contentModerationHandler *content_moderation.ContentModerationHandler,
 ) *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Logger())
+	r.Use(logging.RequestLoggerMiddleware)
 	r.Use(gin.Recovery())
 
 	api := r.Group("/api")
@@ -37,16 +44,41 @@ func NewRouter(
 	{
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
+		authRoutes.POST("/logout", authHandler.Logout)
+		authRoutes.POST("/refresh", authHandler.RefreshToken)
 	}
 
 	booksRoutes := api.Group("/books")
 	{
-		booksRoutes.GET("", bookHandler.GetBooks)
+		booksRoutes.GET("/:id", bookHandler.GetBookByID)
+
+		searchRoutes := booksRoutes.Group("/search")
+		{
+			searchRoutes.GET("", bookSearchHandler.SearchBooks)
+		}
+
+		reviewRoutes := booksRoutes.Group("/:id/reviews")
+		{
+			reviewRoutes.GET("", reviewHandler.GetReviewsByBookID)
+		}
+	}
+
+	contentModerationRoutes := api.Group("/moderation")
+	{
+		protected := contentModerationRoutes.Group("")
+		protected.Use(auth.AuthMiddleware(jwtService))
+		{
+			protected.POST("/report", contentModerationHandler.ReportContent)
+		}
 	}
 
 	ratingsRoutes := api.Group("/ratings")
 	{
-		ratingsRoutes.POST("", ratingHandler.CreateRating)
+		protected := ratingsRoutes.Group("")
+		protected.Use(auth.AuthMiddleware(jwtService))
+		{
+			protected.POST("", ratingHandler.CreateRating)
+		}
 	}
 
 	usersRoutes := api.Group("/users")

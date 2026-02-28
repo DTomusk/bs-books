@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"bs-books-api/internal/auth/refresh_token"
 	"bs-books-api/internal/delivery/response"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,7 +37,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	err := h.service.Register(ctx, req.Email, req.Password)
+	err := h.service.Register(ctx, req.Username, req.Email, req.Password)
 	if err != nil {
 		switch err {
 		case ErrInvalidEmail, ErrShortPassword, ErrLongPassword:
@@ -69,7 +71,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Login(ctx, req.Email, req.Password)
+	jwt, refreshToken, err := h.service.Login(ctx, req.Email, req.Password, c.ClientIP())
 	if err != nil {
 		switch err {
 		case ErrInvalidCredentials:
@@ -80,5 +82,85 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, response.Success[string]{Data: token})
+	// Set http only cookie with refresh token
+	setRefreshTokenCookie(c,
+		refreshToken.Token,
+		int(refreshToken.ExpiresAt-time.Now().Unix()),
+	)
+
+	c.JSON(200, response.Success[string]{Data: jwt})
+}
+
+// RefreshToken godoc
+// @Summary Refresh JWT token
+// @Description Refresh JWT token using refresh token cookie
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Router /auth/refresh [post]
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	ctx := c.Request.Context()
+	refreshToken, err := c.Cookie("refresh_token")
+
+	if err != nil {
+		c.JSON(401, response.NewError("missing_refresh_token", "Refresh token cookie is required"))
+		return
+	}
+
+	jwt, newRefreshToken, err := h.service.RefreshToken(ctx, refreshToken, c.ClientIP())
+	if err != nil {
+		switch err {
+		case refresh_token.ErrInvalidRefreshToken:
+			c.JSON(401, response.NewError("invalid_refresh_token", "Invalid refresh token"))
+			return
+		}
+		c.JSON(500, response.NewInternalServerError(err.Error()))
+		return
+	}
+
+	setRefreshTokenCookie(c,
+		newRefreshToken.Token,
+		int(newRefreshToken.ExpiresAt-time.Now().Unix()),
+	)
+
+	c.JSON(200, response.Success[string]{Data: jwt})
+}
+
+// Logout godoc
+// @Summary Logout a user
+// @Description Logout a user by revoking their refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Router /auth/logout [post]
+func (h *AuthHandler) Logout(c *gin.Context) {
+	ctx := c.Request.Context()
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(401, response.NewError("missing_refresh_token", "Refresh token cookie is required"))
+		return
+	}
+	err = h.service.Logout(ctx, refreshToken)
+	if err != nil {
+		c.JSON(500, response.NewInternalServerError(err.Error()))
+		return
+	}
+
+	// Clear the refresh token cookie
+	setRefreshTokenCookie(c, "", -1)
+
+	c.JSON(200, response.Ok())
+}
+
+func setRefreshTokenCookie(c *gin.Context, token string, maxAge int) {
+	c.SetCookie(
+		"refresh_token",
+		token,
+		maxAge,
+		"/",
+		"",
+		// TODO: set to true in production
+		false,
+		true,
+	)
 }
