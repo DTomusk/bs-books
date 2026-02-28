@@ -32,10 +32,18 @@
     </q-header>
 
     <q-drawer v-model="rightDrawerOpen" behavior="mobile" side="right" elevated>
-      <q-list>
-        <q-item-label header> Essential Links </q-item-label>
-
-        <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
+      <q-list class="full-height" style="display: flex; flex-direction: column">
+        <EssentialLink
+          v-for="link in linksList"
+          :key="link.title"
+          v-bind="link"
+          @closeDrawer="rightDrawerOpen = false"
+        />
+        <q-space />
+        <div class="flex justify-between q-px-sm q-py-xs bg-grey-10 text-white items-center">
+          <p :style="{ margin: '0px', fontSize: 'medium' }">ⓒ BS Books - 2026</p>
+          <p :style="{ margin: '0px' }">v{{ version }}</p>
+        </div>
       </q-list>
     </q-drawer>
 
@@ -66,15 +74,23 @@
 <script setup lang="ts">
 import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink.vue';
 import { useNotify } from 'src/composables/useNotify';
+import { version } from '../../package.json';
 import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
 
 const linksList: EssentialLinkProps[] = [
   {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev',
+    title: 'Home',
+    icon: 'home',
+    route: '/',
+  },
+  {
+    title: 'Some Link',
+    icon: 'fa-regular fa-circle-question',
+  },
+  {
+    title: 'Another Link',
+    icon: 'fa-solid fa-person-drowning',
   },
 ];
 

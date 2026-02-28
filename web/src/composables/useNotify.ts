@@ -16,5 +16,20 @@ export function useNotify() {
     });
   };
 
-  return { notImplemented };
+  const error = (message: string) => {
+    Notify.create({
+      color: 'error',
+      message: message,
+      actions: [
+        {
+          icon: 'close',
+          color: 'white',
+          round: true,
+          handler: () => {},
+        },
+      ],
+    });
+  };
+
+  return { error, notImplemented };
 }
