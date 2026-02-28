@@ -136,7 +136,8 @@ function toggleLeftDrawer() {
   padding: 1rem 0rem;
 
   @media (min-width: $breakpoint-sm-max) {
-    width: 65%; // Same as max-width on heroContainer _LandingPage.vue
+    width: 65%; // width & max-width need to match heroContainer _LandingPage.vue
+    max-width: 1200px;
     padding: 1rem 2rem 1rem 1rem;
   }
 }
