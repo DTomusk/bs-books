@@ -9,8 +9,7 @@
         class="flex-centre-col col rightContainer bg-offwhite"
         style="width: 50%"
       >
-        <!-- Placeholder until login/signup forms are done in the next ticket -->
-        <q-img src="src/assets/login-form.png" width="75%" style="max-width: 450px" />
+        <LoginRegister />
       </div>
     </div>
     <div class="flex-centre-row">
@@ -23,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+import LoginRegister from 'src/pages/LandingPage/LoginRegister.vue';
 import HeroSection from 'src/pages/LandingPage/HeroSection.vue';
 import BookCarousel from 'src/components/book/BookCarousel.vue';
 import HowItWorks from 'src/pages/LandingPage/HowItWorks.vue';
@@ -94,23 +94,7 @@ function scrollToLearnMore() {
     height: 100dvh;
     max-width: 1200px;
     overflow: visible;
-
-    // Shadow from picture hero section
-    .heroContainer::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: min(65%, 1200px);
-      width: 16px;
-      height: 100dvh;
-      pointer-events: none;
-      background: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0.5) 0%,
-        rgba(0, 0, 0, 0.25) 50%,
-        rgba(0, 0, 0, 0) 100%
-      );
-    }
+    filter: drop-shadow(6px 0 6px rgb(0, 0, 0, 0.75));
   }
 }
 
