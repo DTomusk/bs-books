@@ -9,7 +9,10 @@
     <q-btn label="Login" color="secondary" style="width: 100%" @click="notImplemented" />
     <p class="q-mt-md q-mb-none">
       Don't have an account?
-      <span class="text-secondary" style="text-decoration: underline; font-weight: bold"
+      <span
+        class="text-secondary cursor-pointer"
+        style="text-decoration: underline; font-weight: bold"
+        @click="notImplemented"
         >Create one</span
       >
     </p>
@@ -30,9 +33,8 @@ const password = ref('');
 <style lang="scss" scoped>
 .loginContainer {
   width: clamp(15rem, 25vw, 25rem);
-  border: 1px solid grey;
   border-radius: 5px;
-  box-shadow: 0px 0px 5px 2px grey;
+  box-shadow: 0px 0px 8px 1px grey;
   padding: 2rem;
   text-align: center;
 }

@@ -25,5 +25,3 @@ defineProps<{
 const modelValue = defineModel<string>();
 const isPwd = ref(true);
 </script>
-
-<style lang="scss" scoped></style>

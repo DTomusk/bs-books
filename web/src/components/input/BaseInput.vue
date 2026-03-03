@@ -20,5 +20,3 @@ const { inputType = 'text' } = defineProps<{
   inputType?: 'text' | 'password';
 }>();
 </script>
-
-<style lang="scss" scoped></style>
