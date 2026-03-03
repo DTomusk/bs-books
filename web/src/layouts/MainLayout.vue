@@ -61,12 +61,12 @@ const loggedInLinks: EssentialLinkProps[] = [
 const loggedOutLinks: EssentialLinkProps[] = [
   {
     title: 'Login',
-    icon: 'mdi-account-circle',
+    icon: 'mdi-login',
     route: '/auth/login',
   },
   {
     title: 'Create Account',
-    icon: 'mdi-account-circle',
+    icon: 'mdi-account-plus',
     route: '/auth/create-account',
   },
 ];
