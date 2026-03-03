@@ -9,7 +9,7 @@
         class="flex-centre-col col rightContainer bg-offwhite"
         style="width: 50%"
       >
-        <LoginRegister />
+        <AuthContainer />
       </div>
     </div>
     <div class="flex-centre-row">
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import LoginRegister from 'src/pages/LandingPage/LoginRegister.vue';
+import AuthContainer from 'src/pages/LandingPage/AuthContainer.vue';
 import HeroSection from 'src/pages/LandingPage/HeroSection.vue';
 import BookCarousel from 'src/components/book/BookCarousel.vue';
 import HowItWorks from 'src/pages/LandingPage/HowItWorks.vue';
