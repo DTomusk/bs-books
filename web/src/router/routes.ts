@@ -4,7 +4,25 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
+    meta: { variant: 'main' },
     children: [{ path: '', component: () => import('pages/LandingPage/_LandingPage.vue') }],
+  },
+  {
+    path: '/auth',
+    component: () => import('layouts/MainLayout.vue'),
+    meta: { variant: 'auth' },
+    children: [
+      {
+        path: 'login',
+        component: () => import('pages/AuthPage.vue'),
+        props: { mode: 'login', isOwnPage: true },
+      },
+      {
+        path: 'create-account',
+        component: () => import('pages/AuthPage.vue'),
+        props: { mode: 'register', isOwnPage: true },
+      },
+    ],
   },
 
   // Always leave this as last one,
@@ -14,5 +32,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('pages/ErrorNotFound.vue'),
   },
 ];
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    variant: 'main' | 'auth';
+  }
+}
 
 export default routes;

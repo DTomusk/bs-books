@@ -63,7 +63,7 @@ const isMobile = computed(() => $q.screen.lt.md);
   position: relative;
   width: 100%;
   left: 0%;
-  top: 50%;
+  top: 55%;
   transform: translate(0%, -50%);
   text-align: center;
 

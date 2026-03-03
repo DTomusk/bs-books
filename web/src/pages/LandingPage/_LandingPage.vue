@@ -9,7 +9,11 @@
         class="flex-centre-col col rightContainer bg-offwhite"
         style="width: 50%"
       >
-        <AuthContainer />
+        <AuthPage
+          :mode="isLoggingIn ? 'login' : 'register'"
+          :isOwnPage="false"
+          @toggleMode="isLoggingIn = !isLoggingIn"
+        />
       </div>
     </div>
     <div class="flex-centre-row">
@@ -22,11 +26,11 @@
 </template>
 
 <script setup lang="ts">
-import AuthContainer from 'src/pages/LandingPage/AuthContainer.vue';
 import HeroSection from 'src/pages/LandingPage/HeroSection.vue';
 import BookCarousel from 'src/components/book/BookCarousel.vue';
 import HowItWorks from 'src/pages/LandingPage/HowItWorks.vue';
 import type { Book } from 'src/components/models';
+import AuthPage from 'src/pages/AuthPage.vue';
 import { scroll, useQuasar } from 'quasar';
 import { ref, computed } from 'vue';
 
@@ -34,6 +38,7 @@ const $q = useQuasar();
 const { getScrollTarget, setVerticalScrollPosition } = scroll;
 const howItWorksComp = ref<InstanceType<typeof HowItWorks> | null>(null);
 const isMobile = computed(() => $q.screen.lt.md);
+const isLoggingIn = ref(true);
 const featuredBooks: Book[] = [
   {
     image: 'https://cdn.ecommercedns.uk/files/1/238331/3/11640523/9780440867579.jpg',

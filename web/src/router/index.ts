@@ -1,4 +1,5 @@
 import { defineRouter } from '#q-app/wrappers';
+import { useQuasar } from 'quasar';
 import {
   createMemoryHistory,
   createRouter,
@@ -31,6 +32,18 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE),
+  });
+
+  Router.beforeEach((to, from, next) => {
+    const desktopIgnorePaths = ['/auth/login', '/auth/create-account'];
+    const $q = useQuasar();
+
+    if (desktopIgnorePaths.includes(to.path) && $q.screen.gt.sm) {
+      // On desktop, redirect to landing page (different layout)
+      next({ path: '/' });
+    } else {
+      next();
+    }
   });
 
   return Router;
