@@ -21,17 +21,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useQuasar } from 'quasar';
+import { useScreen } from 'src/composables/useScreen';
+import { ref } from 'vue';
 
 defineProps<{ title: string; text: string[] }>();
 
-const $q = useQuasar();
 const hoverKey = ref(0);
 const glowing = ref(false);
 let isPlaying = false;
 const animationDurationMs = 1000; // Approx (may need tweaking)
-const isMobile = computed(() => $q.screen.lt.md);
+const { isMobile } = useScreen();
 
 /**
  * Triggers icon animation (& glow [if applicable])

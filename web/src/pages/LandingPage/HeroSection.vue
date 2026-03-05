@@ -24,13 +24,11 @@
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from 'quasar';
-import { computed } from 'vue';
+import { useScreen } from 'src/composables/useScreen';
 
 const emit = defineEmits(['learnMore']);
 
-const $q = useQuasar();
-const isMobile = computed(() => $q.screen.lt.md);
+const { isMobile } = useScreen();
 </script>
 
 <style lang="scss">

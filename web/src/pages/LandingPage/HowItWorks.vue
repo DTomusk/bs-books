@@ -57,13 +57,12 @@
 
 <script setup lang="ts">
 import ActionCard from 'src/pages/LandingPage/ActionCard.vue';
+import { useScreen } from 'src/composables/useScreen';
 import { defineElement } from '@lordicon/element';
-import { computed, ref } from 'vue';
-import { useQuasar } from 'quasar';
+import { ref } from 'vue';
 
 defineElement();
-const $q = useQuasar();
-const isMobile = computed(() => $q.screen.lt.md);
+const { isMobile } = useScreen();
 const howItWorksEl = ref<HTMLElement | null>(null);
 
 defineExpose({

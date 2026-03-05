@@ -29,15 +29,15 @@
 import HeroSection from 'src/pages/LandingPage/HeroSection.vue';
 import BookCarousel from 'src/components/book/BookCarousel.vue';
 import HowItWorks from 'src/pages/LandingPage/HowItWorks.vue';
+import { useScreen } from 'src/composables/useScreen';
 import type { Book } from 'src/components/models';
 import AuthPage from 'src/pages/AuthPage.vue';
-import { scroll, useQuasar } from 'quasar';
-import { ref, computed } from 'vue';
+import { scroll } from 'quasar';
+import { ref } from 'vue';
 
-const $q = useQuasar();
 const { getScrollTarget, setVerticalScrollPosition } = scroll;
 const howItWorksComp = ref<InstanceType<typeof HowItWorks> | null>(null);
-const isMobile = computed(() => $q.screen.lt.md);
+const { isMobile } = useScreen();
 const isLoggingIn = ref(true);
 const featuredBooks: Book[] = [
   {

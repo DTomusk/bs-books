@@ -33,17 +33,16 @@
 </template>
 
 <script setup lang="ts">
+import { useScreen } from 'src/composables/useScreen';
 import type { Book } from 'src/components/models';
-import { ref, computed } from 'vue';
-import { useQuasar } from 'quasar';
+import { ref } from 'vue';
 
 defineProps<{
   title: string;
   books: Book[];
 }>();
 
-const $q = useQuasar();
-const isMobile = computed(() => $q.screen.lt.md);
+const { isMobile } = useScreen();
 const track = ref<HTMLElement | null>(null);
 
 function scrollByViewport(direction: 1 | -1) {

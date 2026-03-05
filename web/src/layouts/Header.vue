@@ -47,19 +47,18 @@
 </template>
 
 <script setup lang="ts">
+import { useScreen } from 'src/composables/useScreen';
 import { useNotify } from 'src/composables/useNotify';
 import { useRouter } from 'vue-router';
-import { computed, ref } from 'vue';
-import { useQuasar } from 'quasar';
+import { ref } from 'vue';
 
 defineProps<{ variant: 'main' | 'auth' }>();
 const emit = defineEmits<{ (e: 'toggleDrawer'): void }>();
 
-const $q = useQuasar();
 const router = useRouter();
 const search = ref('');
 const { notImplemented } = useNotify();
-const isMobile = computed(() => $q.screen.lt.md);
+const { isMobile } = useScreen();
 </script>
 
 <style lang="scss" scoped>
