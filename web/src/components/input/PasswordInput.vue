@@ -11,6 +11,9 @@
         @click="isPwd = !isPwd"
       />
     </template>
+    <template #bottom>
+      <slot name="bottom" />
+    </template>
   </BaseInput>
 </template>
 

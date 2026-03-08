@@ -6,14 +6,14 @@
     <p class="authTitle text-center q-mt-none q-mb-lg text-grey">
       Enter your credentials to continue
     </p>
-    <BaseInput v-model="email" placeholder="Email" class="q-mb-md" />
-    <BaseInput
-      v-if="mode === 'register'"
-      v-model="username"
-      placeholder="Username"
-      class="q-mb-md"
-    />
-    <PasswordInput v-model="password" placeholder="Password" class="q-mb-xl" />
+    <BaseInput v-model="email" placeholder="Email" />
+    <BaseInput v-if="mode === 'register'" v-model="username" placeholder="Username" />
+    <PasswordInput v-model="password" placeholder="Password" class="q-mb-xl">
+      <template #bottom>
+        <PasswordStrength v-if="mode === 'register'" :password="password" />
+      </template>
+    </PasswordInput>
+
     <q-btn
       :label="mode === 'login' ? 'Login' : 'Create Account'"
       color="secondary"
@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import PasswordStrength from 'src/components/rating/PasswordStrength.vue';
 import PasswordInput from 'src/components/input/PasswordInput.vue';
 import BaseInput from 'src/components/input/BaseInput.vue';
 import { useNotify } from 'src/composables/useNotify';
