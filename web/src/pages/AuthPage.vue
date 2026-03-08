@@ -73,7 +73,7 @@ function handleToggleMode() {
   margin: auto;
   width: 20rem;
   border-radius: 5px;
-  background-color: white;
+  background-color: $offwhite;
   box-shadow: 0px 0px 8px 1px grey;
   padding: 2rem;
   margin-block: 2rem 4rem;
