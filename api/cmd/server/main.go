@@ -110,7 +110,15 @@ func main() {
 	ratingService := ratings.NewRatingService(txRunner, ratings.NewRatingRepo(), bookService, reviewService, eventService)
 	ratingHandler := ratings.NewRatingHandler(ratingService)
 
-	contentModerationHandler := content_moderation.NewContentModerationHandler(content_moderation.NewContentModerationService(database, content_moderation.NewContentModerationRepo(), eventService, reviewService, userService))
+	contentModerationHandler := content_moderation.NewContentModerationHandler(
+		content_moderation.NewContentModerationService(
+			database,
+			content_moderation.NewContentModerationRepo(),
+			eventService,
+			reviewService,
+			userService,
+		),
+	)
 
 	r := delivery.NewRouter(
 		authHandler,
@@ -121,6 +129,7 @@ func main() {
 		jwtService,
 		bookHandler,
 		contentModerationHandler,
+		cfg.CORS_ALLOWED_ORIGIN,
 	)
 
 	srv := &http.Server{
