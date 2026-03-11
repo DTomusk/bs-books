@@ -18,6 +18,7 @@ type Config struct {
 	REVIEW_VISIBILITY_THRESHOLD int
 	REFRESH_TOKEN_EXPIRY_DAYS   int
 	REFRESH_TOKEN_HASH_SALT     string
+	CORS_ALLOWED_ORIGIN         string
 }
 
 var (
@@ -89,6 +90,11 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("missing REFRESH_TOKEN_HASH_SALT environment variable")
 	}
 
+	corsAllowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+	if corsAllowedOrigin == "" {
+		corsAllowedOrigin = "http://localhost:9000"
+	}
+
 	return &Config{
 		DB_URL:                      dbURL,
 		JWT_SECRET_KEY:              jwtSecretKey,
@@ -101,5 +107,6 @@ func LoadConfig() (*Config, error) {
 		REVIEW_VISIBILITY_THRESHOLD: reviewVisibilityThreshold,
 		REFRESH_TOKEN_EXPIRY_DAYS:   refreshTokenExpiryDays,
 		REFRESH_TOKEN_HASH_SALT:     refreshTokenHashSalt,
+		CORS_ALLOWED_ORIGIN:         corsAllowedOrigin,
 	}, nil
 }

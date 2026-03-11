@@ -10,7 +10,9 @@ import (
 	"bs-books-api/internal/reviews"
 	"bs-books-api/internal/users"
 	"net/http"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -25,10 +27,20 @@ func NewRouter(
 	jwtService *auth.JWTService,
 	bookHandler *books.BookHandler,
 	contentModerationHandler *content_moderation.ContentModerationHandler,
+	corsAllowedOrigin string,
 ) *gin.Engine {
 	r := gin.New()
+
 	r.Use(logging.RequestLoggerMiddleware)
 	r.Use(gin.Recovery())
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{corsAllowedOrigin},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	api := r.Group("/api")
 
