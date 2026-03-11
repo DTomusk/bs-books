@@ -18,7 +18,7 @@
       :label="mode === 'login' ? 'Login' : 'Create Account'"
       color="secondary"
       style="width: 100%"
-      @click="notImplemented"
+      @click="mode === 'login' ? notImplemented() : handleRegister()"
     />
     <p class="q-mt-md q-mb-none">
       {{ mode === 'login' ? "Don't have an account?" : 'Already have an account?' }}
@@ -37,6 +37,8 @@ import PasswordStrength from 'src/components/rating/PasswordStrength.vue';
 import PasswordInput from 'src/components/input/PasswordInput.vue';
 import BaseInput from 'src/components/input/BaseInput.vue';
 import { useNotify } from 'src/composables/useNotify';
+// import { useAuthStore } from 'src/stores/authStore';
+import { register } from 'src/services/authService';
 import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 
@@ -52,6 +54,11 @@ const router = useRouter();
 const email = ref('');
 const username = ref('');
 const password = ref('');
+
+async function handleRegister() {
+  console.log('register');
+  // await register(email.value, username.value, password.value);
+}
 
 function handleToggleMode() {
   email.value = '';

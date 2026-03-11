@@ -1,3 +1,4 @@
+import { useAuthStore } from 'src/stores/authStore';
 import { defineRouter } from '#q-app/wrappers';
 import { useQuasar } from 'quasar';
 import {
@@ -35,6 +36,12 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   });
 
   Router.beforeEach((to, from, next) => {
+    const auth = useAuthStore();
+
+    if (to.meta.requiresAuth && !auth.isAuthenticated) {
+      return '/login';
+    }
+
     const desktopIgnorePaths = ['/auth/login', '/auth/create-account'];
     const $q = useQuasar();
 

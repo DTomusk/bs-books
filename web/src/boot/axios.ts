@@ -16,7 +16,7 @@ declare module 'vue' {
 // for each client)
 const api = axios.create({ baseURL: 'https://api.example.com' });
 
-export default defineBoot(({ app }) => {
+export default defineBoot(({ app, router }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
 
   app.config.globalProperties.$axios = axios;
@@ -26,6 +26,27 @@ export default defineBoot(({ app }) => {
   app.config.globalProperties.$api = api;
   // ^ ^ ^ this will allow you to use this.$api (for Vue Options API form)
   //       so you can easily perform requests against your app's API
+
+  api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  });
+
+  api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/auth/login').catch(() => null);
+      }
+      return Promise.reject(new Error(error));
+    },
+  );
 });
 
 export { api };

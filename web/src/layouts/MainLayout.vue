@@ -5,7 +5,7 @@
     <q-drawer v-model="rightDrawerOpen" behavior="mobile" side="right" elevated>
       <q-list class="full-height" style="display: flex; flex-direction: column">
         <EssentialLink
-          v-for="link in [...baseLinks, ...(isLoggedIn ? loggedInLinks : loggedOutLinks)]"
+          v-for="link in [...baseLinks, ...(isAuthenticated ? loggedInLinks : loggedOutLinks)]"
           :key="link.title"
           v-bind="link"
           @closeDrawer="rightDrawerOpen = false"
@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink.vue';
+import { useAuthStore } from 'src/stores/authStore';
 import { version } from '../../package.json';
 import Footer from 'src/layouts/Footer.vue';
 import Header from 'src/layouts/Header.vue';
@@ -35,9 +36,9 @@ import { useRoute } from 'vue-router';
 import { ref, computed } from 'vue';
 
 const route = useRoute();
-const isLoggedIn = ref(false);
+const { isAuthenticated } = useAuthStore();
 const rightDrawerOpen = ref(false);
-const variant = computed(() => route.meta.variant);
+const variant = computed(() => route.meta.variant ?? 'main');
 
 const baseLinks: EssentialLinkProps[] = [
   {

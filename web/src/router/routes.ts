@@ -5,7 +5,14 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     meta: { variant: 'main' },
-    children: [{ path: '', component: () => import('pages/LandingPage/_LandingPage.vue') }],
+    children: [
+      { path: '', component: () => import('pages/LandingPage/_LandingPage.vue') },
+      {
+        path: 'home',
+        component: () => import('pages/Dashboard.vue'),
+        meta: { requiresAuth: true },
+      },
+    ],
   },
   {
     path: '/auth',
@@ -35,7 +42,8 @@ const routes: RouteRecordRaw[] = [
 
 declare module 'vue-router' {
   interface RouteMeta {
-    variant: 'main' | 'auth';
+    variant?: 'main' | 'auth';
+    requiresAuth?: boolean;
   }
 }
 
